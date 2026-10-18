@@ -371,6 +371,41 @@
       renderCurrentTabContent();
     }
 
+    // V64: mọi từ khóa, bộ lọc, trạng thái phân trang / sắp xếp đều là tạm thời.
+    // iOS Safari có thể khôi phục nguyên DOM + biến JS từ bfcache sau khi đóng tab.
+    // Không đụng tới cấu hình API, Host đã gắn, quyền hay dữ liệu người dùng.
+    function resetBrowsingFilters(redraw=true){
+      closeSelectPopover();
+      Object.assign(state,{
+        search:'', affiliateSearch:'',
+        channelFilter:'all', hostFilter:'all', statusFilter:'all',
+        dateFilter:'30', dateStart:'', dateEnd:'',
+        affiliateDate:'all', affiliateStart:'', affiliateEnd:'',
+        leaderScope:'all', leaderSort:'net', leaderDetailSortField:'', leaderDetailSortDirection:'',
+        orderSortField:'', orderSortDirection:'',
+        liveSortField:'', liveSortDirection:'', affiliateSortField:'gross', affiliateSortDirection:'desc',
+        livePage:1, affiliatePage:1
+      });
+      applyPresetDateRange('30');
+      // Chặn form restoration của Safari trước khi React-less UI được render lại.
+      document.querySelectorAll('#toolbar input[type="search"]').forEach(input=>{
+        input.value='';input.setAttribute('autocomplete','off');
+      });
+      if(redraw && state.signedIn)render();
+    }
+    let browsingPageWasHidden=false;
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden'){browsingPageWasHidden=true;return;}
+      if(browsingPageWasHidden){browsingPageWasHidden=false;resetBrowsingFilters();}
+    });
+    window.addEventListener('pagehide',()=>{browsingPageWasHidden=true;});
+    window.addEventListener('pageshow',event=>{
+      if(event.persisted || browsingPageWasHidden){
+        browsingPageWasHidden=false;
+        resetBrowsingFilters();
+      }
+    });
+
     // V60: chỉ cập nhật khu vực kết quả; KHÔNG dựng lại ô tìm kiếm/toolbar.
     // Giữ nguyên DOM của input để bàn phím, focus, IME và vị trí con trỏ không bị mất.
     function updateSearchResults(input, scope='main'){
@@ -473,6 +508,7 @@
       }
       state.signedIn = true;
       localStorage.setItem('dskh_signed_in', '1');
+      resetBrowsingFilters(false);
       syncAuthView();
       render();
       animateViewEntrance();
@@ -487,6 +523,7 @@
       state.previewMemberId=null;
       state.signedIn = false;
       localStorage.setItem('dskh_signed_in', '0');
+      resetBrowsingFilters(false);
       syncAuthView();
       toast('Đã đăng xuất khỏi bản demo');
     }
@@ -543,6 +580,7 @@
     }
 
     loadState();
+    resetBrowsingFilters(false);
     installDemoAutoSync();
     installStorageDemoTimer();
     syncAuthView();

@@ -2038,3 +2038,76 @@ body.auth-signed-out #loginScreen:not(.hidden) .login-card{
   #toolbar .ads63-export{font-size:10.5px}
 }
 @media(prefers-reduced-motion:reduce){.team63-add.btn{transition:none}}
+
+
+/* V65 — Logo nguyên bản (ảnh 3), logo favicon (ảnh 4) và thanh tiêu đề một hàng */
+.side-brand{min-width:0;max-width:none!important;align-items:center;gap:8px}
+.site61-sidebar-logo{height:55px;width:66px;object-fit:contain;flex:0 0 66px;min-width:0}
+.site61-sidebar-title{font-size:clamp(10.5px,.86vw,12px);font-weight:800;letter-spacing:-.045em;line-height:1.15;white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;min-width:0;flex:1}
+.site61-sidebar-title b{white-space:nowrap!important;font-weight:800}
+.login-card .brand{flex-wrap:nowrap!important;gap:10px;align-items:center}
+.site61-brand-image{width:88px;height:75px;object-fit:contain;flex:0 0 88px}
+.site61-brand-title{font-size:clamp(13px,1.7vw,19px);font-weight:800;letter-spacing:-.035em;white-space:nowrap!important;overflow-wrap:normal!important;line-height:1.2}
+.site61-brand-title b{white-space:nowrap!important}
+@media(max-width:820px){
+  #mobileSidebar{padding-top:70px!important}
+  #mobileSidebar .side-brand{padding:4px 2px 16px!important;max-width:none!important;width:100%;gap:5px!important}
+  #mobileSidebar .site61-sidebar-logo{width:62px;height:53px;flex-basis:62px}
+  #mobileSidebar .site61-sidebar-title{font-size:11.1px;letter-spacing:-.055em}
+  .login-card .brand{gap:7px}
+  .site61-brand-image{width:68px;height:60px;flex-basis:68px}
+  .site61-brand-title{font-size:clamp(11px,3.5vw,15px)}
+}
+@media(max-width:370px){
+  #mobileSidebar .site61-sidebar-logo{width:55px;flex-basis:55px}
+  #mobileSidebar .site61-sidebar-title{font-size:10.4px}
+  .site61-brand-image{width:56px;flex-basis:56px}
+  .site61-brand-title{font-size:12px}
+}
+/* V65 — Biểu đồ cột tập hợp 7 ngày và khu vực chạm có phản hồi ổn định */
+.gmv-week{min-width:0;border:1px solid #eadffc;border-radius:17px;padding:14px 15px 12px;background:linear-gradient(180deg,#fff,#fdfbff)}
+.gmv-week-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;color:#8e81a1;margin-bottom:12px;line-height:1.45}
+.gmv-week-top b{background:#f0e9ff;border-radius:999px;padding:5px 9px;color:#7756c4;font-size:10px;white-space:nowrap}
+.gmv-week-plot{height:206px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;align-items:stretch;min-width:0;background:repeating-linear-gradient(to top,transparent 0, transparent calc(25% - 1px),#f1eaf9 calc(25% - 1px),#f1eaf9 25%);border-bottom:1px solid #eee6fa}
+.gmv-week-day{border:1px solid transparent;border-radius:11px 11px 2px 2px;background:transparent;display:flex;flex-direction:column;align-items:stretch;gap:7px;padding:8px 3px 3px;min-width:0;cursor:pointer;color:#8e80a5;font:inherit;touch-action:manipulation;transition:background-color .15s ease,border-color .15s ease}
+.gmv-week-day:hover,.gmv-week-day.is-active{border-color:#e7dafa;background:rgba(245,239,255,.75)}
+.gmv-week-day:focus-visible{outline:2px solid #9371e7;outline-offset:1px}
+.gmv-week-bararea{height:100%;min-height:0;display:flex;justify-content:center;align-items:flex-end;gap:4px}
+.gmv-week-bar{display:block;width:min(20px,39%);min-width:0;border-radius:6px 6px 2px 2px;transition:filter .18s ease}
+.gmv-week-bar.is-purple{background:linear-gradient(180deg,#aa7bf5,#7855d9)}
+.gmv-week-bar.is-green{background:linear-gradient(180deg,#8be6d0,#28ad91)}
+.gmv-week-day.is-active .gmv-week-bar{filter:saturate(1.18)}
+.gmv-week-day-label{font-size:10px;text-align:center;white-space:nowrap;font-weight:600;color:#8b7c9e;font-variant-numeric:tabular-nums}
+.gmv-week-day.is-active .gmv-week-day-label{font-weight:800;color:#6948c8}
+.gmv-week-legend{display:flex;flex-wrap:wrap;gap:9px 18px;justify-content:center;margin:15px 0 11px;color:#867799;font-size:10.5px}
+.gmv-week-legend span{display:inline-flex;align-items:center;gap:7px}
+.gmv-week-legend i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.gmv-week-legend i.is-purple{background:#8f68e4}.gmv-week-legend i.is-green{background:#38b89d}
+.gmv-week-detail{padding:13px 14px;border:1px solid #e8dcf9;border-radius:13px;background:#f9f6ff;min-width:0}
+.gmv-week-detail-head{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:10px}
+.gmv-week-detail-head strong{font-size:12px;color:#43305d}.gmv-week-detail-head span{font-size:10px;color:#9384a5}
+.gmv-week-detail-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.gmv-week-detail-values>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.gmv-week-detail-values span{font-size:10px;color:#8c7da0;line-height:1.45}
+.gmv-week-detail-values b{font-size:12px;font-weight:800;color:#49385e;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.gmv-week-detail-values b.is-purple{color:#8051d6}.gmv-week-detail-values b.is-green{color:#0d9b7f}
+.gmv-week-note{font-size:10px;text-align:center;color:#9a8dab;margin:10px 0 0;line-height:1.6}
+@media(max-width:620px){
+  .gmv-week{padding:11px 8px}
+  .gmv-week-plot{height:173px;gap:2px}
+  .gmv-week-day{gap:5px;padding:6px 1px 2px;border-radius:9px 9px 0 0}
+  .gmv-week-bararea{gap:3px}
+  .gmv-week-day-label{font-size:9px;letter-spacing:-.025em}
+  .gmv-week-detail-head{flex-direction:column;align-items:flex-start;gap:3px}
+  .gmv-week-detail-values{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .gmv-week-detail-values b{font-size:11px}
+}
+/* V65 — tránh double-tap zoom, rung lớp khi chạm mobile và tự zoom popup */
+@media(pointer:coarse){
+  button,.custom-select-trigger,.select-option,.gmv-week-day,summary{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .select-popover,.date-option-popover,.date-select-popover{animation:none!important}
+  #teamModal:not(.hidden) .team-dialog{animation:none!important}
+  #deleteTeamModal:not(.hidden) .confirm-dialog{animation:none!important}
+  #content.view-enter > *{animation-duration:.16s!important}
+}
+@media(prefers-reduced-motion:reduce){.gmv-week-day,.gmv-week-bar{transition:none!important}}

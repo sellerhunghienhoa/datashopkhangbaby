@@ -71,6 +71,7 @@ window.ShopKhangBabyLive={
     state.role=me.role;
     state.profile={displayName:user.displayName||user.email,email:user.email||'',photoURL:user.photoURL||'',uid:user.uid,emailVerified:user.emailVerified,provider:'firebase'};
     state.signedIn=true;
+    resetBrowsingFilters(false);
     syncAuthView();
     state.liveData=[];demoAffiliateLives.splice(0,demoAffiliateLives.length);window.V50_REAL_ADS=[];
     render();
@@ -80,7 +81,7 @@ window.ShopKhangBabyLive={
   },
   signedOut(){
     if(v50RefreshTimer){clearInterval(v50RefreshTimer);v50RefreshTimer=null;}
-    state.signedIn=false;state.liveData=[];demoAffiliateLives.splice(0,demoAffiliateLives.length);window.V50_REAL_ADS=[];
+    state.signedIn=false;resetBrowsingFilters(false);state.liveData=[];demoAffiliateLives.splice(0,demoAffiliateLives.length);window.V50_REAL_ADS=[];
     syncAuthView();
   },
   authError(message){

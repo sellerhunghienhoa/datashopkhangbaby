@@ -1,3 +1,19 @@
+## V65 — logo, favicon, biểu đồ 7 ngày và mobile
+
+- `public/assets/khangbaby-logo.png`: bản gốc **ảnh số 3** người dùng tải lên, nền trong suốt, dùng ở màn đăng nhập và menu.
+- `public/assets/khangbaby-favicon-original.png`: bản gốc **ảnh số 4** dùng làm nguồn favicon. `favicon.png` và `apple-touch-icon.png` là bản **chỉ thu nhỏ từ ảnh số 4**, không tạo ảnh mới.
+- Logo và dòng chữ “DATA SHOPKHANGBABY” được bố trí chung hàng, có điều chỉnh theo chiều rộng màn hình.
+- Biểu đồ GMV cột hiển thị 7 ngày gồm hôm nay và 6 ngày trước. Lọc kênh/Host/trạng thái/tìm kiếm vẫn có hiệu lực; bộ lọc ngày của trang không làm kéo dài 7 cột. Có 2 cột/ngày và chi tiết khi chạm. Ngày không có phiên giữ giá trị 0.
+- Giảm chuyển động popover/popup trên thiết bị chạm, hỗ trợ `prefers-reduced-motion`.
+
+## V64 — Không lưu từ khóa / bộ lọc khi mở lại ứng dụng
+
+- Các ô tìm kiếm LIVE, Affiliate, bộ lọc ngày, kênh, Host, trạng thái, xếp hạng và trang đang xem được đặt lại mặc định khi tải lại hoặc quay lại từ nền (Safari/PWA), và khi đăng nhập/đăng xuất.
+- Khi chuyển qua lại các tab mà **không rời ứng dụng**, bộ lọc đang chọn vẫn hoạt động trong phiên.
+- Các trường tìm kiếm đặt `autocomplete="off"` để hạn chế khôi phục văn bản tự động của trình duyệt. Nếu iOS khôi phục trang từ bfcache, `pageshow` và `visibilitychange` sẽ dọn bộ lọc mà không xóa dữ liệu quan trọng.
+- Không chạm các bản ghi Host, tài khoản/phân quyền, cấu hình nguồn dữ liệu, trạng thái đăng nhập, hay dữ liệu TikTok/Cloudflare.
+- Vẫn là demo khi `runtime-config.js` có `mode: 'demo'`; kết nối thực cần cấu hình và cấp quyền ở backend.
+
 ## Cập nhật V63 — 18/10/2026
 
 - Làm nhẹ chữ gợi ý trong ô tên, email và tìm kiếm (13px, font-weight 500), ô nhập thực tế trên iOS vẫn 16px để tránh tự zoom.
