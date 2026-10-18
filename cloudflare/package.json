@@ -1,0 +1,18 @@
+{
+  "name": "data-shopkhangbaby-cloudflare-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test test-partner-token.mjs",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply SHOPKHANGBABY_DB --local",
+    "migrate:remote": "wrangler d1 migrations apply SHOPKHANGBABY_DB --remote"
+  },
+  "dependencies": {
+    "jose": "^6.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

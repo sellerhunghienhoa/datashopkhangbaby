@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6fe">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <title>DATA SHOPKHANGBABY · Dashboard Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <section id="loginScreen" class="login hidden">
+    <div class="login-card">
+      <div class="brand">DATA <span>SHOPKHANGBABY</span></div>
+      <h1 style="margin:14px 0 8px;font-size:30px">Đăng nhập dashboard</h1>
+      <p class="subtitle">Theo dõi phiên LIVE đã kết thúc, đối soát doanh thu và phân tích quảng cáo TikTok trong một giao diện duy nhất.</p>
+      <button class="login-btn" onclick="signIn()"><svg class="google-logo" width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.76 7.18l7.73 6C44.42 38.03 46.98 31.86 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.46-.76-3.02-.76-4.59s.27-3.13.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Tiếp tục bằng Google — Demo</span></button>
+      <div class="login-note">Bản demo chỉ mô phỏng đăng nhập Google / Firebase.</div>
+    </div>
+  </section>
+
+  <section id="appShell" class="app">
+    <div id="mobileMenuOverlay" class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+    <aside id="mobileSidebar" aria-label="Điều hướng website">
+      <button type="button" id="mobileMenuClose" class="mobile-menu-close" aria-label="Đóng menu" onclick="closeMobileMenu()">
+        <svg class="ui-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="side-brand">DATA <span>SHOPKHANGBABY</span></div>
+      <div class="side-label">DASHBOARD</div>
+      <button class="nav-btn active" data-tab="overview" onclick="go('overview')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Tổng quan</button>
+      <button class="nav-btn" data-tab="leaders" onclick="go('leaders')"><span class="nav-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z"/><path d="M7 6H5a2 2 0 0 0 0 4h2"/><path d="M17 6h2a2 2 0 0 1 0 4h-2"/></svg></span>Top Nhà sáng tạo / Kênh</button>
+      <button class="nav-btn" data-tab="lives" onclick="go('lives')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></span>Phiên LIVE đã kết thúc</button>
+      <button class="nav-btn" data-tab="affiliate" onclick="go('affiliate')"><span class="nav-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="3"/><path d="M2.5 20v-2a5.5 5.5 0 0 1 11 0v2"/><path d="m14 10 3 3 5-6"/></svg></span>LIVE Affiliate</button>
+      <button class="nav-btn" data-tab="orders" onclick="go('orders')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 3h16v18l-4-2-4 2-4-2-4 2V3Z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>Đối soát đơn hàng</button>
+      <button class="nav-btn" data-tab="ads" onclick="go('ads')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 3v18h18"/><path d="m7 16 4-5 3 3 6-8"/></svg></span>Phân tích quảng cáo</button>
+      <button class="nav-btn" data-tab="kpi" onclick="go('kpi')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>KPI Host & vận hành</button>
+
+      <div class="side-label" id="systemNavHeading">HỆ THỐNG</div>
+      <button class="nav-btn admin-only" data-tab="team" onclick="go('team')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span>Phân quyền</button>
+      <button class="nav-btn admin-only" data-tab="connect" onclick="go('connect')"><span class="nav-icon"><svg class="ui-icon " width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 2v6M15 2v6M7 8h10v4a5 5 0 0 1-10 0V8ZM12 17v5"/></svg></span>Kết nối API</button>
+      <button class="nav-btn admin-only" data-tab="storage" onclick="go('storage')"><span class="nav-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/><path d="M8 6.5h.01M8 17.5h.01M13 6.5h4M13 17.5h4"/></svg></span>Dọn dẹp bộ nhớ</button>
+      <div class="side-foot">
+        <b>Demo định hướng triển khai thật</b><br>
+        • Google login qua Firebase<br>
+        • Backend qua Cloudflare Workers<br>
+        • Đồng bộ TikTok Shop / TikTok Ads 24/24
+      </div>
+    </aside>
+
+    <main>
+      <header class="mobile-appbar" id="mobileAppbar" aria-label="Thanh điều hướng nhanh">
+        <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Mở menu điều hướng" aria-controls="mobileSidebar" aria-expanded="false" onclick="toggleMobileMenu()">
+      <svg class="ui-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+    </button>
+        <div id="mobilePageTitle" class="mobile-page-title" aria-live="polite">Tổng quan hệ thống</div>
+        <button id="mobileProfileTrigger" type="button" class="mobile-profile-trigger" aria-label="Mở hồ sơ tài khoản Shop Khangbaby" title="Mở hồ sơ tài khoản" onclick="openProfileModal()">
+          <span id="mobileProfileAvatar" class="profile-avatar profile-avatar-sm" aria-hidden="true">SK</span>
+          <span id="mobileProfileName" class="mobile-profile-name">Shop Khangbaby</span>
+        </button>
+      </header>
+      <div class="topbar">
+        <div class="page-heading">
+          <div class="eyebrow">DATA SHOPKHANGBABY • TikTok dashboard demo</div>
+          <div class="title-line">
+            <div class="title" id="pageTitle">Tổng quan hệ thống</div>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="returnAdminButton" type="button" class="btn ghost hidden" onclick="exitPermissionPreview()">↩ Quay về quản trị</button>
+          <button id="profileTrigger" type="button" class="profile-trigger" onclick="openProfileModal()" aria-haspopup="dialog" aria-label="Mở hồ sơ tài khoản">
+            <span id="headerProfileAvatar" class="profile-avatar profile-avatar-sm" aria-hidden="true">SK</span>
+            <span class="profile-trigger-text"><b id="headerProfileName">Shop Khangbaby</b><small id="headerProfileCaption">Tài khoản mẫu</small></span>
+          </button>
+        </div>
+      </div>
+
+      <div id="toolbar" class="toolbar"></div>
+      <div id="content"></div>
+      <div class="footer">DATA SHOPKHANGBABY • Dashboard demo</div>
+    </main>
+    <div id="profileModal" class="dialog-overlay hidden" role="presentation" onclick="if(event.target===this)closeProfileModal()">
+      <div class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileDialogTitle" tabindex="-1">
+        <div class="profile-dialog-heading"><span class="modal-kicker">TÀI KHOẢN CÁ NHÂN</span><button type="button" class="modal-x" aria-label="Đóng hồ sơ" onclick="closeProfileModal()">×</button><h2 id="profileDialogTitle">Hồ sơ của tôi</h2><p>Thông tin người đăng nhập và vai trò truy cập dashboard</p></div>
+        <div id="profileModalContent" class="profile-dialog-body"></div>
+        <div class="modal-footer"><button type="button" class="btn ghost" onclick="closeProfileModal()">Đóng</button><button type="button" class="btn primary" onclick="signOut()">Đăng xuất</button></div>
+      </div>
+    </div>
+    <div id="teamModal" class="dialog-overlay hidden" role="presentation" onclick="if(event.target===this)closeTeamModal()">
+      <div class="team-dialog" role="dialog" aria-modal="true" aria-labelledby="teamDialogTitle" tabindex="-1">
+        <div class="team-dialog-heading"><div><div class="modal-kicker">QUẢN LÝ QUYỀN TRUY CẬP</div><h2 id="teamDialogTitle">Chỉnh sửa quyền người dùng</h2><p>Thay đổi vai trò và giới hạn những chức năng được sử dụng.</p></div><button type="button" class="modal-x" aria-label="Đóng" onclick="closeTeamModal()">×</button></div>
+        <form id="teamEditForm" onsubmit="saveTeamMember(event)"><div id="teamEditFields"></div><div class="modal-footer"><button type="button" class="btn ghost" onclick="closeTeamModal()">Hủy</button><button type="submit" class="btn primary">Lưu quyền truy cập</button></div></form>
+      </div>
+    </div>
+    <div id="deleteTeamModal" class="dialog-overlay hidden" role="presentation" onclick="if(event.target===this)closeDeleteTeamModal()">
+      <div class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="deleteTeamTitle" tabindex="-1">
+        <div class="confirm-icon">!</div><h2 id="deleteTeamTitle">Xóa tài khoản con?</h2><p id="deleteTeamText"></p><p class="mini">Chỉ xóa khỏi danh sách và quyền truy cập mô phỏng trên trình duyệt này; không xóa tài khoản Google thật.</p>
+        <div class="modal-footer"><button type="button" class="btn ghost" onclick="closeDeleteTeamModal()">Hủy</button><button type="button" class="btn danger" onclick="confirmDeleteTeamMember()">Xóa tài khoản</button></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="/js/runtime-config.js" defer></script>
+  <script src="/js/data.js" defer></script>
+  <script src="/js/dashboard.js" defer></script>
+  <script src="/js/accounts.js" defer></script>
+  <script src="/js/storage-demo.js" defer></script>
+  <script src="/js/connections-demo.js" defer></script>
+  <script src="/js/ui.js" defer></script>
+  <script src="/js/api-client.js" defer></script>
+</body>
+</html>

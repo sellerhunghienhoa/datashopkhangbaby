@@ -1,0 +1,17 @@
+# CHỈ DÀNH CHO MÁY PHÁT TRIỂN, KHÔNG COMMIT GIÁ TRỊ THẬT.
+# TikTok secrets thật: dùng "npx wrangler secret put TEN_BIEN".
+# TIKTOK_SHOP_APP_SECRET=...
+# TIKTOK_ADS_ACCESS_TOKEN=...
+
+# V43 — chỉ tên biến mẫu, tuyệt đối KHÔNG điền giá trị thật vào file chia sẻ:
+# TTS_SHOP_APP_KEY=PUBLIC_APP_KEY_PLACEHOLDER
+# TTS_SHOP_APP_SECRET=SECRET_ONLY_ON_SERVER
+# TTS_PARTNER_APP_SECRET=SECRET_ONLY_ON_SERVER
+# TIKTOK_ADS_APP_SECRET=SECRET_ONLY_ON_SERVER
+# Lưu access/refresh token phát sinh động vào kho token mã hóa và có quản lý vòng đời.
+
+# Partner token refresh: supply secrets via wrangler secret put in production.
+# PARTNER_APP_KEY=...
+# PARTNER_APP_SECRET=...
+# PARTNER_INITIAL_REFRESH_TOKEN=...
+# PARTNER_TOKEN_ENCRYPTION_KEY=... (base64 32 bytes)

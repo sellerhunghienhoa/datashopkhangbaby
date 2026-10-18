@@ -1,0 +1,21 @@
+name = "data-shopkhangbaby-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+FIREBASE_PROJECT_ID = "REPLACE_WITH_FIREBASE_PROJECT_ID"
+FRONTEND_ORIGIN = "https://REPLACE_WITH_YOUR_FIREBASE_SITE.web.app"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shopkhangbaby_db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Nếu chưa bật R2, comment khối này và tạo bucket sau.
+[[r2_buckets]]
+binding = "EXPORTS"
+bucket_name = "shopkhangbaby-exports"
+
+[triggers]
+crons = ["*/15 * * * *"]  # TikTok Partner token check each 15 minutes
