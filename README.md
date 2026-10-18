@@ -1,4 +1,12 @@
-## V61 — Giao diện Affiliate, favicon và Top xếp hạng
+## Cập nhật V63 — 18/10/2026
+
+- Làm nhẹ chữ gợi ý trong ô tên, email và tìm kiếm (13px, font-weight 500), ô nhập thực tế trên iOS vẫn 16px để tránh tự zoom.
+- Tab Phân tích quảng cáo: ba bộ lọc và nút Xuất báo cáo Ads chung một hàng trên desktop; bố cục 2×2 trên điện thoại để giữ vùng chạm và không ép chữ.
+- Nút Thêm tài khoản gọn, nội dung một dòng; trên mobile sẽ tự xuống dòng riêng khi thiếu chỗ.
+- Dùng logo KHANG BABY do người dùng cung cấp ở màn đăng nhập, sidebar, favicon và Apple touch icon; giữ nguyên ảnh đại diện Google.
+- Chưa đổi backend, API hoặc cách tính GMV/KPI.
+
+## V62 — Giao diện Affiliate, favicon và Top xếp hạng
 
 - Nút **Xuất CSV Affiliate** nằm cùng hàng với dropdown **chọn thời gian** ở mobile, tìm kiếm ở hàng trên.
 - Favicon, apple-touch-icon, logo đăng nhập và sidebar được lấy từ **logo Khang Baby người dùng cung cấp**. Dùng ảnh vuông đầy đủ, không cắt nội dung logo.

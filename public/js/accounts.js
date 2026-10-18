@@ -35,7 +35,7 @@
     function teamRoleBadge(role){return `<span class="pill ${role==='Admin'?'purple':role==='Ops'?'ok':'warn'}">${ROLE_NAMES[role]||'Chỉ xem'}</span>`;}
     function renderTeam(){
       return `<section class="panel">
-        <div class="panel-head"><div><h3>Quản lý người dùng & phân quyền</h3><div class="mini">Sửa quyền, thêm hoặc xóa tài khoản con trong bản demo.</div></div><button type="button" class="btn primary" onclick="openTeamEditor()">${icon('plus')} Thêm tài khoản</button></div>
+        <div class="panel-head team63-head"><div><h3>Quản lý người dùng & phân quyền</h3><div class="mini">Sửa quyền, thêm hoặc xóa tài khoản con trong bản demo.</div></div><button type="button" class="btn primary team63-add" onclick="openTeamEditor()">${icon('plus')} <span>Thêm tài khoản</span></button></div>
         <div class="user-list">${state.members.map(u=>`<div class="user-item ${u.protected?'user-item-owner':''}">
           <div class="profile-avatar profile-avatar-sm" aria-hidden="true">${escapeTeam(initials(u.name))}</div>
           <div class="user-item-info"><h4>${escapeTeam(u.name)} ${u.protected?'<span class="pill purple">Tài khoản chính</span>':''}</h4>
@@ -63,7 +63,9 @@
         <div class="permission-grid">${TEAM_FEATURES.map(p=>`<label class="permission-check"><input type="checkbox" name="permission" value="${p.id}" ${(u?.permissions||BASE_PERMISSIONS[role]).includes(p.id)?'checked':''}><span>${p.title}</span></label>`).join('')}</div>
         <p class="mini" style="margin-top:14px">Thay vai trò sẽ nạp quyền mặc định; bạn có thể tiếp tục tùy chỉnh từng mục.</p>
       </div>`;
+      closeSelectPopover();
       document.getElementById('teamModal').classList.remove('hidden');
+      enhanceAllSelects();
       // Safari iOS: không tự focus ô nhập khi mở popup. Tránh tự mở bàn phím
       // và phóng to viewport trước khi người dùng có ý định nhập.
       if(!window.matchMedia('(pointer:coarse), (max-width:820px)').matches){
@@ -88,7 +90,7 @@
       else {state.members.push({id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,5),name,email,role,permissions});}
       saveTeamMembers();closeTeamModal();render();toast('Đã lưu quyền của tài khoản demo');
     }
-    function closeTeamModal(){document.getElementById('teamModal').classList.add('hidden');editingMemberId=null;}
+    function closeTeamModal(){closeSelectPopover();document.getElementById('teamModal').classList.add('hidden');editingMemberId=null;}
     function openDeleteTeamModal(id){
       if(!hasPermission('manageUsers'))return toast('Không có quyền xóa tài khoản');
       const u=state.members.find(x=>x.id===id);

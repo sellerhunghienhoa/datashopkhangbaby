@@ -283,21 +283,21 @@
           </div>`;
       } else if(state.currentTab==='ads'){
         toolbar.innerHTML = `
-          <div class="filter-grid is-three">
-            <select class="select" onchange="state.channelFilter=this.value;render()">
+          <div class="ads63-toolbar" aria-label="Bộ lọc và xuất báo cáo quảng cáo">
+            <select class="select" aria-label="Lọc shop và nguồn quảng cáo" onchange="state.channelFilter=this.value;render()">
               <option value="all" ${state.channelFilter==='all'?'selected':''}>Tất cả shop / nguồn quảng cáo</option>
               <option value="shop-001" ${state.channelFilter==='shop-001'?'selected':''}>ShopKhangBaby</option>
               <option value="shop-002" ${state.channelFilter==='shop-002'?'selected':''}>Mẹ Khang Sữa</option>
             </select>
             ${buildQuickRangeFilter()}
-            <select class="select" onchange="state.statusFilter=this.value;render()">
+            <select class="select" aria-label="Lọc trạng thái chiến dịch" onchange="state.statusFilter=this.value;render()">
               <option value="all" ${state.statusFilter==='all'?'selected':''}>Tất cả trạng thái chiến dịch</option>
-              <option value="Đang chạy">Đang chạy</option>
-              <option value="Cần tối ưu">Cần tối ưu</option>
-              <option value="Tạm dừng">Tạm dừng</option>
+              <option value="Đang chạy" ${state.statusFilter==='Đang chạy'?'selected':''}>Đang chạy</option>
+              <option value="Cần tối ưu" ${state.statusFilter==='Cần tối ưu'?'selected':''}>Cần tối ưu</option>
+              <option value="Tạm dừng" ${state.statusFilter==='Tạm dừng'?'selected':''}>Tạm dừng</option>
             </select>
-          </div>
-          <div class="toolbar-group page-actions"><button class="btn ghost" onclick="exportAdsCSV()">${icon('download')} Xuất báo cáo Ads</button></div>`;
+            <button type="button" class="btn ghost ads63-export" onclick="exportAdsCSV()">${icon('download')} <span>Xuất báo cáo Ads</span></button>
+          </div>`;
       } else {
         toolbar.innerHTML = '';
       }
@@ -791,7 +791,6 @@
       const affiliate=allRows.filter(x=>x.kind==='creator').sort((a,b)=>b.net-a.net);
       const officialNet=official.reduce((sum,x)=>sum+x.net,0);
       const affiliateNet=affiliate.reduce((sum,x)=>sum+x.net,0);
-      const leader=rows[0];
       const maxValue=Math.max(1,...rows.map(x=>state.leaderSort==='orders'?x.orders:x.net));
       const criterion=state.leaderSort==='orders'?'số đơn sau hoàn/hủy':'GMV sau hoàn/hủy';
       const quantity=value=>Number(value||0).toLocaleString('vi-VN');
@@ -807,12 +806,6 @@
           <span class="leaders61-podium-meta">${quantity(x.orders)} đơn · ${quantity(x.sessions)} phiên LIVE</span>
         </article>`).join('');
       return `
-        <section class="leaders61-hero">
-          <div class="leaders61-hero-copy"><span class="leaders61-eyebrow">${icon('target')} BẢNG XẾP HẠNG BÁN HÀNG</span><h2>Top Nhà sáng tạo & Kênh</h2><p>Nhìn nhanh ai đang dẫn đầu, so sánh theo ${criterion} và kiểm tra chi tiết doanh số sau hoàn/hủy.</p>
-            <div class="leaders61-hero-tags"><span>${quantity(rows.length)} đối tượng</span><span>Không cộng trùng GMV giữa hai nguồn</span></div>
-          </div>
-          <div class="leaders61-hero-highlight"><span>Đứng đầu ${state.leaderSort==='orders'?'số đơn':'doanh số'}</span><b>${leader?configSafe(leader.name):'Chưa có dữ liệu'}</b><strong>${leader?result(leader):'—'}</strong></div>
-        </section>
         <section class="leaders61-overview" aria-label="Doanh số theo nguồn">
           <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon channel">${icon('video')}</span><span>Kênh LIVE chính thức</span></div><strong>${money(officialNet)}</strong><small>${quantity(official.length)} kênh có dữ liệu</small></article>
           <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon creator">${icon('users')}</span><span>Nhà sáng tạo Affiliate</span></div><strong>${money(affiliateNet)}</strong><small>${quantity(affiliate.length)} nhà sáng tạo có dữ liệu</small></article>
