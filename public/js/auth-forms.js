@@ -1,6 +1,6 @@
 
 /* V69 — đăng nhập nhiều cách. Demo KHÔNG xác thực mật khẩu; Live: Firebase Auth. */
-const auth69Live=()=>window.SHOPKHANGBABY_CONFIG?.mode==='live';
+const auth69Live=()=>true;
 let auth69DemoRequests=[];
 function auth69GetDemoRequests(){return auth69DemoRequests;}
 function auth69SetDemoRequests(items){auth69DemoRequests=items;}

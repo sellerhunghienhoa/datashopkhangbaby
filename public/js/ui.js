@@ -501,87 +501,20 @@
       toast(`Đã gắn phiên ${id} cho Host ${host}`);
     }
 
-    function setRole(role){
-      state.previewMemberId=null;
-      state.role = role;
-      localStorage.setItem('dskh_role', role);
-      state.currentTab = 'overview';
-      render();
-      toast('Đã chuyển vai trò demo: ' + ({Admin:'Quản trị viên',Ops:'Vận hành sàn',Host:'Host LIVE'})[role]);
-    }
+    function setRole(){toast('Quyền được xác thực bởi máy chủ, không thể tự thay đổi.','error');}
 
     function signIn(){
-      if(window.SHOPKHANGBABY_CONFIG?.mode==='live'){
-        if(!window.ShopKhangBabyAuth)return toast('Chưa khởi tạo Firebase Authentication, hãy kiểm tra cấu hình.','error');
-        return window.ShopKhangBabyAuth.signIn().catch(e=>toast('Không đăng nhập được: '+e.message,'error'));
-      }
-      state.signedIn = true;
-      state.role='Viewer';state.previewMemberId=null;
-      state.profile={displayName:'Tài khoản demo',email:'viewer@example.com',photoURL:'',uid:'',emailVerified:false,provider:'demo'};
-      localStorage.setItem('dskh_role','Viewer');
-      localStorage.setItem('dskh_signed_in', '1');
-      resetBrowsingFilters(false);
-      syncAuthView();
-      render();
-      animateViewEntrance();
+      if(!window.ShopKhangBabyAuth)return toast('Firebase chưa được cấu hình hoặc đang khởi tạo.','error');
+      return window.ShopKhangBabyAuth.signIn().catch(e=>toast('Đăng nhập thất bại: '+e.message,'error'));
     }
-
-    function demoAdmin69(){
-      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return;
-      state.signedIn=true;state.role='Admin';state.previewMemberId=null;
-      state.profile={displayName:'Quản trị Demo',email:'admin-demo@example.com',photoURL:'',uid:'',emailVerified:false,provider:'demo'};
-      localStorage.setItem('dskh_role','Admin');localStorage.setItem('dskh_signed_in','1');
-      syncAuthView();render();toast('Chế độ quản trị DEMO, không cấp quyền thực tế.');
-    }
+    
 
     function signOut(){
-      if(window.SHOPKHANGBABY_CONFIG?.mode==='live'){
-        if(!window.ShopKhangBabyAuth)return toast('Chưa có Firebase Authentication','error');
-        return window.ShopKhangBabyAuth.signOut().catch(e=>toast('Không đăng xuất được: '+e.message,'error'));
-      }
-      closeProfileModal(true);closeTeamModal();closeDeleteTeamModal();
-      state.previewMemberId=null;
-      state.signedIn = false;
-      localStorage.setItem('dskh_signed_in', '0');
-      resetBrowsingFilters(false);
-      syncAuthView();
-      toast('Đã đăng xuất khỏi bản demo');
+      if(!window.ShopKhangBabyAuth)return toast('Firebase Auth chưa sẵn sàng.','error');
+      return window.ShopKhangBabyAuth.signOut().catch(e=>toast(e.message,'error'));
     }
-
-    function refreshDemo(){
-      if(state.currentTab !== 'connect' || !canAccessTab('connect')) return;
-      const time = new Date();
-      state.lastManualSync = time.toLocaleString('vi-VN');
-      state.lastDemoSync = state.lastManualSync;
-      state.syncHistory.unshift('Đồng bộ thủ công lúc '+state.lastManualSync+' (chỉ mô phỏng, không gọi TikTok API)');
-      state.syncHistory = state.syncHistory.slice(0,10);
-      render();
-      toast('Đã cập nhật thời gian đồng bộ mô phỏng. Chưa kết nối TikTok API thật.', 'success', 'Đồng bộ thủ công hoàn tất');
-    }
-
-
-    function addDemoLive(){
-      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return toast('Không thể thêm phiên demo vào dữ liệu thật.','info');
-      if(!hasPermission('editHosts'))return toast('Tài khoản không có quyền thêm phiên');
-      const d = Date.now().toString().slice(-16);
-      state.liveData.unshift({
-        id:d,
-        title:'Live Daily',
-        start:'18:30 17/10/2026',
-        duration:'2h15min',
-        hours:2.25,
-        gross:18200000,
-        refund:630000,
-        orders:38,
-        canceled:2,
-        status:'Đang theo dõi',
-        host:'Thảo My',
-        channel:OFFICIAL_CHANNELS[0]
-      });
-      saveHosts();
-      render();
-      toast('Đã thêm 1 phiên LIVE demo mới');
-    }
+    function refreshDemo(){toast('Không có đồng bộ mô phỏng. Vui lòng xem trạng thái kết nối thật.','error');}
+    function addDemoLive(){toast('Không thể tạo phiên LIVE mẫu trong Production.','error');}
 
     function exportCSV(){
       const rows = filteredLives();
@@ -594,14 +527,14 @@
       const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'DATA_SHOPKHANGBABY_LIVE_2_KENH_demo.csv';
+      a.download = 'DATA_SHOPKHANGBABY_LIVE.csv';
       a.click();
       URL.revokeObjectURL(a.href);
     }
 
     loadState();
     resetBrowsingFilters(false);
-    installDemoAutoSync();
+
     installStorageDemoTimer();
     syncAuthView();
     if(state.signedIn){

@@ -1,12 +1,6 @@
-/* Đổi mode sang 'live' CHỈ SAU khi đã triển khai Worker, D1, Firebase Auth và cấp quyền trong app_users.
-   Các giá trị Firebase ở đây là public client configuration, KHÔNG đặt App Secret / TikTok token. */
-window.SHOPKHANGBABY_CONFIG = Object.freeze({
-  mode: 'demo',
-  apiBaseUrl: '',
-  firebase: {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    appId: ''
-  }
+/* V80 Production — fill Firebase public config and Worker URL before deployment. */
+window.SHOPKHANGBABY_CONFIG=Object.freeze({
+  mode:'live',
+  apiBaseUrl:'', // Example: https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev
+  firebase:{apiKey:'',authDomain:'',projectId:'',appId:''}
 });

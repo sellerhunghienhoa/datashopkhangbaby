@@ -32,7 +32,7 @@ async function v50RefreshData(){
   if(!V50_LIVE || !state.signedIn)return;
   const token=await window.shopKhangBabyGetIdToken();
   const live=await v50FetchAll('getLiveSessions',token);
-  state.liveData=live.map(v50RealLive);
+  state.liveData=live.filter(r=>['shopkhangbaby','mekhangsua'].includes(String(r.channel_username||'').toLowerCase())).map(v50RealLive);
   render();
 }
 async function v50RefreshStatus(){

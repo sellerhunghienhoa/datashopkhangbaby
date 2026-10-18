@@ -117,8 +117,8 @@ export async function syncStatus(env){
   const sources=SOURCES.map(source=>({source,configured:ready,last_success_at:map.get(source)?.last_success_at||null,
     last_error:map.get(source)?.last_error||null,processed:map.get(source)?.total_items_processed||0}));
   const ch=(await env.DB.prepare('SELECT username,display_name,tiktok_creator_id FROM official_channels ORDER BY username').all()).results||[];
-  return {mode:'live',ingest_configured:ready,tiktok_auto_fetch_configured:false,
-    note:'Dữ liệu thật từ D1. API TikTok trực tiếp cần OAuth/scope và adapter riêng.',sources,channels:ch};
+  return {mode:'live',ingest_configured:ready,tiktok_auto_fetch_configured:Boolean(env.SELLER_APP_KEY && env.SELLER_APP_SECRET && env.SELLER_REFRESH_TOKENS_JSON),
+    note:'Cron chỉ đồng bộ khi token Seller, shop cipher, TikTok scope và schema dữ liệu thực đều hợp lệ. Trạng thái token Seller xem trong Admin.',sources,channels:ch};
 }
 export async function validateIngestKey(request,env){
   const match=(request.headers.get('Authorization')||'').match(/^Bearer ([\x21-\x7e]{30,})$/);

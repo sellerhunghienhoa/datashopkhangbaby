@@ -1,5 +1,6 @@
 import { registerIdentity, reissueToken, listPending, approveToken } from './account-activation.js';
 import { getPartnerTokenStatus, refreshPartnerToken } from './partner-token.js';
+import {runTikTokAutoSync,sellerTokenStatus} from './tiktok-auto-sync.js';
 import { SOURCES, importBatch, syncStatus, validateIngestKey } from './sync-pipeline.js';
 // DATA SHOPKHANGBABY – Cloudflare Worker API starter.
 // API dữ liệu D1 thật (mặc định rỗng). CHƯA có trình đồng bộ TikTok/OAuth.
@@ -110,7 +111,7 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
    return json(await listPending(env.DB),200,cors);
   }catch(e){return json({error:String(e.message||'Lỗi kích hoạt').slice(0,200)},400,cors);}
 }
-    if (!['/api/v1/live-sessions', '/api/v1/sync/status', '/api/v1/me', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
+    if (!['/api/v1/live-sessions', '/api/v1/sync/status', '/api/v1/me', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh', '/api/v1/seller-token/status'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
     try {
       const access = await requireUser(request, env);
       if (access.error) return json({ error: access.error }, access.status, cors);
@@ -123,6 +124,10 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
         if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);
         if(!['Admin','Ops'].includes(access.user.role))return json({error:'Không có quyền xem trạng thái đồng bộ'},403,cors);
         return json(await syncStatus(env),200,cors);
+      }
+      if (url.pathname==='/api/v1/seller-token/status'){
+        if(access.user.role!=='Admin')return json({error:'Chỉ Admin'},403,cors);
+        return json(await sellerTokenStatus(env),200,cors);
       }
       if (url.pathname.startsWith('/api/v1/partner-token/')) {
         if (access.user.role !== 'Admin') return json({error:'Chỉ quản trị viên được quản lý trạng thái Partner'},403,cors);
@@ -155,6 +160,6 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
   },
   async scheduled(controller, env, ctx) {
     // Always runs independently of browsers; only refreshes when due.
-    ctx.waitUntil(refreshPartnerToken(env).catch(()=>{}));
+    ctx.waitUntil(Promise.allSettled([refreshPartnerToken(env),runTikTokAutoSync(env)]));
   }
 };

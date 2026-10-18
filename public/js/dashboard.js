@@ -101,26 +101,13 @@
       const hostSaved = localStorage.getItem('dskh_live_host_map');
       let mapped = {};
       if(hostSaved){ try{ mapped = JSON.parse(hostSaved); }catch(e){} }
-      state.liveData = liveMode ? [] : baseLives.map(x=>({...x, host:mapped[x.id] || x.host}));
+      state.liveData = [];
       state.autoEnabled = localStorage.getItem('dskh_auto_enabled') !== 'false';
       state.autoMinutes = Number(localStorage.getItem('dskh_auto_minutes') || 15);
-      const role = localStorage.getItem('dskh_role');
-      const signed = localStorage.getItem('dskh_signed_in');
-      if(role) state.role = role;
-      if(signed!==null && !liveMode) state.signedIn = signed === '1';
-      if(liveMode)state.signedIn=false;
-      const storedMembers=localStorage.getItem('dskh_demo_users_v17');
-      let members=defaultTeamMembers();
-      if(storedMembers){try{
-        const parsed=JSON.parse(storedMembers);
-        if(Array.isArray(parsed)){
-          const valid=parsed.filter(u=>u && typeof u.id==='string' && typeof u.name==='string' && typeof u.email==='string' && ['Admin','Ops','Host','Viewer'].includes(u.role) && Array.isArray(u.permissions)).slice(0,100);
-          members=[members[0],...valid.filter(u=>u.id!=='owner')];
-        }
-      }catch(e){}}
-      state.members=members;
+      state.role='Viewer';state.signedIn=false;
+      state.members=[];
       if(!state.dateStart && !state.dateEnd){ applyPresetDateRange(state.dateFilter || '1'); }
-      loadStorageDemoState();
+
     }
 
     function saveHosts(){

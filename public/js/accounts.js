@@ -17,12 +17,8 @@
       Host:['overview','lives','kpi'],
       Viewer:['overview']
     };
-    function defaultTeamMembers(){return [
-      {id:'owner',name:'ShopKhangBaby',email:'shopkhangbaby@gmail.com',role:'Admin',permissions:[...BASE_PERMISSIONS.Admin],protected:true},
-      {id:'ops-demo',name:'Nhân sự vận hành (Demo)',email:'ops@example.com',role:'Ops',permissions:[...BASE_PERMISSIONS.Ops]},
-      {id:'host-demo',name:'Nhân sự Host (Demo)',email:'host@example.com',role:'Host',permissions:[...BASE_PERMISSIONS.Host]}
-    ];}
-    function saveTeamMembers(){localStorage.setItem('dskh_demo_users_v17',JSON.stringify(state.members.filter(m=>m.id!=='owner')));}
+    function defaultTeamMembers(){return [];}
+    function saveTeamMembers(){throw new Error('Chỉ được thay đổi quyền tại API quản trị đã xác thực.');}
     function permissionSet(){
       if(state.previewMemberId){const u=state.members.find(x=>x.id===state.previewMemberId);if(u)return u.permissions;}
       return BASE_PERMISSIONS[state.role]||BASE_PERMISSIONS.Viewer;
@@ -34,7 +30,7 @@
 // V69: phần duyệt token server-side, tách khỏi danh sách user demo.
 
 function activation69Panel(){
-  const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
+  const live=true;
   return `<section class="panel activation69"><div class="panel-head"><div><h3>Kích hoạt tài khoản mới</h3><div class="mini">Nhập mã do người đăng ký gửi. Kích hoạt chỉ xác nhận tài khoản, chưa phân quyền nâng cao.</div></div></div>
    <form class="activation69-form" onsubmit="approveAccount69(event)">
      <label>Mã kích hoạt<input id="activation69Token" autocomplete="off" placeholder="Nhập token kích hoạt ở đây ..." required spellcheck="false"/></label>
@@ -47,7 +43,7 @@ function activation69Panel(){
 }
 async function loadActivationRequests69(){
   const el=document.getElementById('activation69List');if(!el)return;
-  const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
+  const live=true;
   try{
     const list=live?(await window.ShopKhangBabyApi.activationRequests(await window.shopKhangBabyGetIdToken())).items:
       (window.auth69GetDemoRequests?.()||[]).filter(x=>x.status==='pending');
@@ -59,7 +55,7 @@ async function approveAccount69(event){
   event.preventDefault();
   const code=document.getElementById('activation69Token').value.trim().toUpperCase();
   if(!hasPermission('manageUsers'))return toast('Bạn không có quyền duyệt người dùng','error');
-  const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
+  const live=true;
   try{
     if(live){
       await window.ShopKhangBabyApi.activateUser(await window.shopKhangBabyGetIdToken(),code,'Viewer');
@@ -89,19 +85,7 @@ window.approveAccount69=approveAccount69;
 
 
 function renderTeam(){
-  const userListMarkup=`<section class="panel">
-    <div class="panel-head team63-head"><div><h3>Quản lý người dùng & phân quyền</h3><div class="mini">Tài khoản được thêm từ luồng kích hoạt. Tại đây bạn sửa quyền hoặc xóa tài khoản demo.</div></div></div>
-    <div class="user-list">${state.members.map(u=>`<div class="user-item ${u.protected?'user-item-owner':''}">
-      <div class="profile-avatar profile-avatar-sm" aria-hidden="true">${escapeTeam(initials(u.name))}</div>
-      <div class="user-item-info"><h4>${escapeTeam(u.name)} ${u.protected?'<span class="pill purple">Tài khoản chính</span>':''}</h4>
-      <div class="mini">${escapeTeam(u.email)}</div><div class="user-tag-list">${teamRoleBadge(u.role)}${u.permissions.filter(x=>!['manageUsers','manageAPI','manageStorage','editHosts'].includes(x)).slice(0,3).map(p=>`<span class="user-mini-tag">${escapeTeam(TEAM_FEATURES.find(f=>f.id===p)?.title||p)}</span>`).join('')}${u.permissions.length>4?`<span class="user-mini-tag">+ ${u.permissions.length-3} quyền khác</span>`:''}</div>
-      </div><div class="user-item-actions">${u.protected?'<span class="mini">Được bảo vệ</span>':`<button type="button" class="team-action" onclick="openTeamEditor('${escapeTeam(u.id)}')">${icon('settings')} Sửa quyền</button><button type="button" class="team-action delete" onclick="openDeleteTeamModal('${escapeTeam(u.id)}')">${icon('circle-x')} Xóa</button>`}</div>
-    </div>`).join('')}</div>
-    <div class="note" style="margin-top:15px"><b>Lưu ý:</b> Khu vực “Kích hoạt tài khoản mới” chỉ dùng để kích hoạt. Sau khi kích hoạt, tài khoản mặc định mang quyền <b>Chỉ xem</b> và sẽ xuất hiện ở đây để bạn chỉnh lại vai trò.</div>
-    <div class="note" style="margin-top:10px"><b>Xem thử giới hạn quyền:</b> ${state.members.filter(u=>!u.protected).slice(0,4).map(u=>`<button type="button" class="team-action" style="margin:5px" onclick="previewMember('${escapeTeam(u.id)}')">${escapeTeam(u.name)}</button>`).join('')} <span class="mini">Chỉ xem thử giao diện, không đăng nhập thay người dùng.</span></div>
-  </section>`;
-  if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return activation69Panel()+userListMarkup+`<section class="panel"><h3>Phân quyền hệ thống</h3><p class="mini">Trong môi trường thật, dữ liệu quyền phải được xác minh ở backend (Firebase Auth + Cloudflare Worker/D1). Bản demo này chủ yếu minh họa giao diện và luồng sử dụng.</p></section>`;
-  return activation69Panel()+userListMarkup;
+  return activation69Panel()+`<section class="panel"><h3>Quản lý người dùng & phân quyền</h3><p class="mini">Không hiển thị tài khoản giả. Quyền truy cập phải được cấp và kiểm tra tại Cloudflare Worker / D1. Giao diện sửa vai trò sẽ mở khi endpoint quản trị đã triển khai và kiểm thử.</p><div class="note">Không thể chỉnh quyền bằng localStorage trên trình duyệt. Không có người dùng mẫu.</div></section>`;
 }
 function escapeTeam(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function initials(name){const parts=String(name||'').trim().split(/\s+/).filter(Boolean);return (parts.length>1?parts[0][0]+parts[parts.length-1][0]:(parts[0]||'SK').slice(0,2)).toLocaleUpperCase('vi-VN');}

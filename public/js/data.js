@@ -27,21 +27,12 @@
       storage:'Dọn dẹp và quản lý bộ nhớ'
     };
 
-    const baseLives = [
-      {id:'7697565117730999048', title:'Live Daily', start:'16:24 17/10/2026', duration:'3h9min', hours:3.15, gross:7500000, refund:220000, orders:15, canceled:1, status:'Đang theo dõi', host:'Thảo My', channel:'ShopKhangBaby'},
-      {id:'7697465608271203090', title:'Live Daily', start:'09:58 17/10/2026', duration:'6h0min', hours:6.0, gross:36700000, refund:1250000, orders:52, canceled:2, status:'Tạm đối soát', host:'Dung', channel:'ShopKhangBaby'},
-      {id:'7697421468795161352', title:'Live Daily', start:'07:07 17/10/2026', duration:'2h50min', hours:2.83, gross:15000000, refund:420000, orders:22, canceled:1, status:'Tạm đối soát', host:'Tâm', channel:'Mẹ Khang Sữa'},
-      {id:'7697192156787706642', title:'Deal hời ngày 16/10', start:'16:17 16/10/2026', duration:'6h5min', hours:6.08, gross:45700000, refund:1680000, orders:61, canceled:3, status:'Tiếp tục cập nhật', host:'Thảo My', channel:'ShopKhangBaby'},
-      {id:'7697128051830754055', title:'Deal hời ngày 16/10', start:'12:08 16/10/2026', duration:'3h50min', hours:3.83, gross:21000000, refund:820000, orders:30, canceled:1, status:'Tiếp tục cập nhật', host:'Dung', channel:'Mẹ Khang Sữa'},
-      {id:'7697045328712764167', title:'Deal hời ngày 16/10', start:'06:48 16/10/2026', duration:'4h32min', hours:4.53, gross:34400000, refund:1430000, orders:93, canceled:4, status:'Tạm đối soát', host:'Tâm', channel:'Mẹ Khang Sữa'},
-      {id:'7696815828506921734', title:'Siêu Deal HIKID', start:'15:57 15/10/2026', duration:'8h5min', hours:8.08, gross:123900000, refund:4280000, orders:192, canceled:7, status:'Đã chốt tạm', host:'Thảo My', channel:'ShopKhangBaby'},
-      {id:'7696750035085220616', title:'Siêu Deal HIKID', start:'11:29 15/10/2026', duration:'7h42min', hours:7.7, gross:113200000, refund:3850000, orders:406, canceled:15, status:'Đã chốt tạm', host:'Dung', channel:'Mẹ Khang Sữa'}
-    ];
+    const baseLives = [];
 
     let state = {
       currentTab:'overview',
-      role:'Admin',
-      signedIn:true,
+      role:'Viewer',
+      signedIn:false,
       search:'',
       hostFilter:'all',
       channelFilter:'all',
@@ -65,5 +56,5 @@
       storageSample:null,
       members:[],
       previewMemberId:null,
-      profile:{displayName:'ShopKhangBaby',email:'shopkhangbaby@gmail.com',photoURL:'',uid:'',emailVerified:false,provider:'demo'}
+      profile:{displayName:'ShopKhangBaby',email:'shopkhangbaby@gmail.com',photoURL:'',uid:'',emailVerified:false,provider:'firebase'}
     };
