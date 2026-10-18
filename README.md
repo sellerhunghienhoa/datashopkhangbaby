@@ -1,3 +1,10 @@
+## Cập nhật V54
+
+- Bổ sung **viewport-fit=cover** để iPhone/Safari không còn tạo dải trắng ở **đỉnh** và **chân** trang.
+- Tăng độ liền mạch nền mobile ở cả **màn đăng nhập** và **dashboard sau đăng nhập**.
+- Làm mượt lại gradient ở **mobile appbar** để chuyển trắng → tím pastel tự nhiên hơn.
+- Cân lại phần **safe-area bottom** để hạn chế dải trắng còn sót phía trên thanh trình duyệt trên iPhone.
+
 ## Cập nhật V53
 
 - Tối ưu tiếp **nền mobile** để liền mạch hơn ở cả trạng thái **đăng nhập / đăng xuất / đang xem dashboard**.
