@@ -1,3 +1,22 @@
+# DATA SHOPKHANGBABY — V58
+
+## Điều chỉnh riêng mobile (theo góp ý của bạn)
+
+Các khu vực trở lại bố cục V56, **mỗi thẻ / panel một hàng** trên màn hình điện thoại:
+
+- KPI theo từng cặp Host & vận hành (Thảo My, Dung, Tâm).
+- Tổng hợp KPI vận hành và Giải thích logic KPI.
+- Phễu chuyển đổi và Đánh giá hiệu suất & gợi ý tối ưu của Ads.
+
+Các thẻ số liệu ngắn (GMV, đơn hàng, ROAS, chi tiêu...) vẫn theo bố cục 2 cột của V57, trừ màn hình quá hẹp. Desktop không đổi. Chỉ CSS/nhãn bố cục được điều chỉnh, các phép tính không thay đổi.
+
+## V56 — Biểu đồ GMV & ẩn thanh cuộn
+
+- Thay biểu đồ cột **Biến động GMV theo phiên LIVE** bằng hai đường tương ứng **GMV đã ghi nhận** và **GMV sau hoàn/hủy** theo các phiên thực tế trong bộ lọc.
+- Vùng tô xanh, nét tím đứt, chấm dữ liệu và tooltip khi rê chuột, chạm hoặc dùng bàn phím; tooltip hiển thị số **đồng đầy đủ** thay vì sao chép số trong ảnh tham khảo.
+- Giới hạn hiển thị **10 phiên gần nhất của bộ lọc**, theo thứ tự thời gian tăng dần; không tạo dữ liệu giả trong chế độ Live.
+- Ẩn thanh cuộn dọc/ngang trên toàn giao diện mà **vẫn giữ cuộn bằng chuột hoặc vuốt**, kể cả bảng ngang và dropdown.
+
 **LƯU Ý KHI KIỂM TRA TRÊN iPHONE:** Đây là bản mã nguồn, **chưa tự cập nhật website `datashopkhangbaby.web.app`**. Sau khi triển khai ZIP V55 lên Firebase Hosting, hãy tải lại Safari (nếu cần mở tab riêng/Private để loại trừ cache). `firebase.json` đã đặt `Cache-Control: no-cache` và các đường dẫn CSS/JS thêm `?v=55`. Vùng chứa thanh địa chỉ dưới cùng của Safari do iOS vẽ, website chỉ có thể phối nền để giảm đường phân cách, không thể đổi toàn bộ giao diện gốc của Safari.
 
 ## V55 — sửa nền Safari iPhone theo video người dùng

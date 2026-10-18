@@ -301,6 +301,111 @@
       }
     }
 
+    // V56: biểu đồ diễn biến GMV theo phiên LIVE thực tế; không dùng số liệu ảnh tham khảo.
+    // Điểm biểu đồ chỉ xuất phát từ filteredLives() và giữ thứ tự thời gian tăng dần.
+    let gmvTrendPoints = [];
+    function gmvChartSafe(input){return String(input??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function gmvChartCurve(points){
+      if(!points.length)return '';
+      if(points.length===1)return `M ${points[0][0].toFixed(2)} ${points[0][1].toFixed(2)}`;
+      let d=`M ${points[0][0].toFixed(2)} ${points[0][1].toFixed(2)}`;
+      for(let i=0;i<points.length-1;i++){
+        const a=points[Math.max(0,i-1)],b=points[i],c=points[i+1],e=points[Math.min(points.length-1,i+2)];
+        const step=(c[0]-b[0])/6;
+        const cp1x=b[0]+step,cp2x=c[0]-step;
+        // Tension giới hạn độ dao động để không tạo đỉnh âm hoặc vượt dữ liệu.
+        const cp1y=b[1]+Math.max(-48,Math.min(48,(c[1]-a[1])/6));
+        const cp2y=c[1]-Math.max(-48,Math.min(48,(e[1]-b[1])/6));
+        d+=` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${c[0].toFixed(2)} ${c[1].toFixed(2)}`;
+      }
+      return d;
+    }
+    function showGmvTrendPoint(index){
+      const wrapper=document.querySelector('.gmv-trend');
+      const x=gmvTrendPoints[index];
+      if(!wrapper||!x)return;
+      wrapper.querySelectorAll('.gmv-trend-hit').forEach(el=>{
+        const current=Number(el.dataset.gmvIndex)===index;
+        el.classList.toggle('is-active',current);
+        el.setAttribute('aria-pressed',String(current));
+      });
+      const tip=wrapper.querySelector('.gmv-trend-tooltip');
+      if(!tip)return;
+      tip.innerHTML=`<div class="gmv-tip-header"><b>${gmvChartSafe(x.title)}</b><span class="gmv-tip-time">${gmvChartSafe(x.start)}</span></div>
+        <div class="gmv-tip-source">${gmvChartSafe(x.channel)} · ${gmvChartSafe(x.host)}</div>
+        <div class="gmv-tip-row"><span>GMV đã ghi nhận</span><strong class="gmv-tip-purple">${money(x.gross)}</strong></div>
+        <div class="gmv-tip-row"><span>Hoàn / hủy</span><strong class="gmv-tip-refund">−${money(x.refund)}</strong></div>
+        <div class="gmv-tip-row"><span>GMV sau hoàn / hủy</span><strong class="gmv-tip-green">${money(Math.max(0,x.gross-x.refund))}</strong></div>
+        <div class="gmv-tip-bottom">${Number(x.orders||0).toLocaleString('vi-VN')} đơn hàng · Phiên ${index+1}/${gmvTrendPoints.length}</div>`;
+      wrapper.dataset.activePoint=String(index);
+    }
+    function renderGmvTrendChart(rows){
+      const chronological=rows.filter(x=>parseDMYHM(x.start)).slice().sort((a,b)=>parseDMYHM(a.start)-parseDMYHM(b.start));
+      // Giữ tối đa 10 điểm để có thể đọc rõ ngày và chạm trên điện thoại.
+      const sessions=chronological.slice(-10);
+      gmvTrendPoints=sessions.map(x=>({title:x.title,start:x.start,channel:x.channel,host:x.host,gross:Number(x.gross||0),refund:Number(x.refund||0),orders:Number(x.orders||0)}));
+      if(!sessions.length)return `<div class="gmv-trend-empty">${icon('chart')}<b>Chưa có phiên LIVE trong khoảng đã chọn</b><span>Hãy đổi bộ lọc để xem biến động GMV từ dữ liệu thực tế.</span></div>`;
+      const isCompact=window.innerWidth<=590;
+      const left=isCompact?107:119,right=isCompact?376:738,top=isCompact?21:27,bottom=isCompact?196:242;
+      const maxValue=Math.max(1,...sessions.map(x=>Math.max(0,Number(x.gross)||0)));
+      // Trục Y đặt quanh giá trị lớn nhất (không làm đường biểu đồ bị dẹt).
+      const rawStep=maxValue/4;
+      const exp=Math.pow(10,Math.floor(Math.log10(rawStep)));
+      const niceMult=[1,2,4,5,10].find(m=>m*exp>=rawStep)||10;
+      const step=Math.max(1,niceMult*exp);
+      const maxScale=step*4;
+      const coordX=i=>sessions.length===1?(left+right)/2:left+(right-left)*i/(sessions.length-1);
+      const coordY=v=>bottom-(Math.max(0,Math.min(maxScale,v))/maxScale)*(bottom-top);
+      const purple=sessions.map((x,i)=>[coordX(i),coordY(Number(x.gross)||0)]);
+      const green=sessions.map((x,i)=>[coordX(i),coordY(Math.max(0,Number(x.gross||0)-Number(x.refund||0)))]);
+      const strokeGross=gmvChartCurve(purple),strokeNet=gmvChartCurve(green);
+      const area=green.length>1?`${strokeNet} L ${green.at(-1)[0].toFixed(2)} ${bottom} L ${green[0][0].toFixed(2)} ${bottom} Z`:'';
+      const ticks=Array.from({length:5},(_,i)=>{
+        const value=(4-i)*step,y=coordY(value);
+        return `<g><line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="#e9e1f6" stroke-width="1.3" stroke-dasharray="4 6"/><text x="${left-11}" y="${y+3.5}" text-anchor="end" class="gmv-tick">${money(value)}</text></g>`;
+      }).join('');
+      const gap=Math.max(1,Math.ceil(sessions.length/(isCompact?4:5)));
+      const labels=sessions.map((x,i)=>{
+        if(i!==0&&i!==sessions.length-1&&i%gap!==0)return '';
+        const date=parseDMYHM(x.start);
+        const label=`${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`;
+        return `<text x="${coordX(i)}" y="${isCompact?230:270}" text-anchor="middle" class="gmv-date-tick">${label}</text>`;
+      }).join('');
+      const selected=sessions.reduce((best,x,i)=>Number(x.gross)>Number(sessions[best].gross)?i:best,0);
+      const hit=sessions.map((x,i)=>{
+        const [gx,gy]=purple[i],ny=green[i][1];
+        const a=`Phiên ${i+1}, ${x.title}, ${x.start}; GMV ghi nhận ${money(Number(x.gross||0))}, GMV sau hoàn/hủy ${money(Math.max(0,Number(x.gross||0)-Number(x.refund||0)))}`;
+        return `<g class="gmv-trend-hit ${i===selected?'is-active':''}" tabindex="0" role="button" aria-pressed="${String(i===selected)}" aria-label="${gmvChartSafe(a)}" data-gmv-index="${i}" onpointerenter="showGmvTrendPoint(${i})" onfocus="showGmvTrendPoint(${i})" onclick="showGmvTrendPoint(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showGmvTrendPoint(${i})}">
+          <circle cx="${gx}" cy="${gy}" r="${isCompact?27:20}" fill="transparent" class="gmv-touch"/>
+          <circle cx="${gx}" cy="${ny}" r="${isCompact?25:17}" fill="transparent" class="gmv-touch"/>
+          <circle class="gmv-gross-dot" cx="${gx}" cy="${gy}" r="4.9"/>
+          <circle class="gmv-net-dot" cx="${gx}" cy="${ny}" r="4.5"/>
+        </g>`;
+      }).join('');
+      // SVG định dạng cố định để vẽ mượt ở mọi độ rộng; tooltip chỉ chứa dữ liệu phiên thật.
+      const html=`<div class="gmv-trend" data-active-point="${selected}">
+        <div class="gmv-trend-body">
+          <svg class="gmv-trend-svg" viewBox="0 0 ${isCompact?'400 247':'760 283'}" role="img" aria-label="Biểu đồ so sánh GMV đã ghi nhận màu tím và GMV sau hoàn hủy màu xanh theo thời gian từng phiên LIVE">
+            <defs><linearGradient id="gmv-net-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#37c9ac" stop-opacity=".38"/><stop offset="100%" stop-color="#37c9ac" stop-opacity=".018"/></linearGradient></defs>
+            ${ticks}
+            ${area?`<path d="${area}" fill="url(#gmv-net-gradient)"/>`:''}
+            ${green.length>1?`<path d="${strokeNet}" class="gmv-net-line"/>`:''}
+            ${purple.length>1?`<path d="${strokeGross}" class="gmv-gross-line"/>`:''}
+            ${labels}${hit}
+          </svg>
+          <div class="gmv-trend-tooltip" role="status" aria-live="polite"></div>
+        </div>
+        <div class="gmv-trend-legend"><span><i class="gmv-legend-purple"></i>GMV đã ghi nhận</span><span><i class="gmv-legend-green"></i>GMV sau hoàn / hủy</span></div>
+        <div class="gmv-trend-caption">${sessions.length} phiên gần nhất trong bộ lọc · Chạm vào điểm dữ liệu để xem chi tiết · Đơn vị: đồng</div>
+      </div>`;
+      // Tooltip mặc định là phiên GMV cao nhất trong tập đang hiển thị.
+      requestAnimationFrame(()=>{
+        const panel=document.querySelector('.gmv-trend');
+        if(panel && panel.dataset.activePoint===String(selected))showGmvTrendPoint(selected);
+      });
+      return html;
+    }
+
     function renderOverview(){
       const rows = filteredLives();
       const t = totals(rows);
@@ -341,16 +446,11 @@
             <div class="panel-head">
               <div>
                 <h3>Biến động GMV theo phiên LIVE</h3>
-                <div class="mini">Minh họa nhanh để duyệt bố cục dashboard</div>
+                <div class="mini">So sánh GMV ghi nhận và sau hoàn/hủy qua từng phiên đang lọc</div>
               </div>
-              <span class="pill purple">${rows.length} phiên • 20 phiên mỗi trang</span>
+              <span class="pill purple">${rows.length} phiên</span>
             </div>
-            <div class="bar-chart">
-              ${rows.slice(0,6).map(x=>`<div class="bar" style="height:${Math.max(30,(x.gross/130000000)*170)}px"><span>${moneyShort(x.gross)}</span></div>`).join('')}
-            </div>
-            <div class="axis">
-              ${rows.slice(0,6).map(x=>`<span>${x.start.split(' ')[1]}</span>`).join('')}
-            </div>
+            ${renderGmvTrendChart(rows)}
           </div>
           <div class="panel">
             <div class="panel-head">
@@ -907,10 +1007,10 @@
           </tbody></table></div>
         </section>
 
-        <section class="sum-box">
+        <section class="sum-box ads-detail-section">
           <section class="panel">
             <div class="panel-head"><div><h3>Phễu chuyển đổi</h3><div class="mini">Giúp xem rơi nhiều ở bước nào.</div></div></div>
-            <div class="pair-grid">
+            <div class="pair-grid ads-funnel-grid">
               <div class="pair-card"><h4>Lượt hiển thị</h4><div class="line"><span class="label">Tổng impressions</span><span class="value">${sum.impressions.toLocaleString('vi-VN')}</span></div><div class="line"><span class="label">CTR</span><span class="value">${ctr.toFixed(2).replace('.',',')}%</span></div></div>
               <div class="pair-card"><h4>Nhấp & xem sản phẩm</h4><div class="line"><span class="label">Lượt nhấp</span><span class="value">${sum.clicks.toLocaleString('vi-VN')}</span></div><div class="line"><span class="label">CPC</span><span class="value">${money(Math.round(cpc))}</span></div></div>
               <div class="pair-card"><h4>Thêm vào giỏ / thanh toán</h4><div class="line"><span class="label">Add to cart</span><span class="value">${sum.atc.toLocaleString('vi-VN')}</span></div><div class="line"><span class="label">Checkout</span><span class="value">${sum.checkout.toLocaleString('vi-VN')}</span></div></div>
@@ -979,9 +1079,9 @@ function hostSummaryRows(rows){
           <div class="metric"><div class="metric-top"><span>Tổng giờ LIVE</span><span class="metric-icon tone-emerald">${icon('clock')}</span></div><div class="metric-value">${formatHoursDecimal(totals(rows).hours)}</div><div class="metric-note">Theo các phiên đang lọc</div></div>
         </section>
 
-        <section class="panel">
+        <section class="panel kpi-pair-section">
           <div class="panel-head"><div><h3>KPI theo từng cặp Host & vận hành</h3><div class="mini">Host 0,3% • Vận hành 0,1% theo GMV sau hoàn/hủy</div></div></div>
-          <div class="pair-grid">
+          <div class="pair-grid kpi-pair-grid">
             ${summary.map(x=>`<div class="pair-card">
               <h4>${x.host} <span class="mini">↔ ${x.operator}</span></h4>
               <div class="line"><span class="label">Số phiên LIVE</span><span class="value">${x.sessions}</span></div>
@@ -993,7 +1093,7 @@ function hostSummaryRows(rows){
           </div>
         </section>
 
-        <section class="sum-box">
+        <section class="sum-box kpi-detail-section">
           <div class="panel">
             <div class="panel-head"><div><h3>Tổng hợp KPI vận hành</h3><div class="mini">Phần này làm rõ trường hợp 1 nhân sự vận hành quản lý nhiều Host</div></div></div>
             <div class="table-wrap">

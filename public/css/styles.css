@@ -1541,9 +1541,15 @@ body.profile-modal-active{overflow:hidden}
   main{padding:0 12px calc(18px + env(safe-area-inset-bottom,0px)) !important}
   .mobile-appbar{margin:0 -12px 14px !important;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 12px !important}
   #content{gap:12px}
-  .metrics{grid-template-columns:1fr !important}
-  .grid-2,.sum-box,.pair-grid,.ad-cards{grid-template-columns:1fr !important}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .sum-box,.pair-grid,.ad-cards,.rank-stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .grid-2,.rank-main-grid{grid-template-columns:1fr !important}
   .panel,.metric,.rank-panel,.ad-card,.pair-card{padding:15px}
+  .metric{min-height:100%;display:flex;flex-direction:column;justify-content:space-between}
+  .metric-value{font-size:17px;line-height:1.32;margin:12px 0 8px}
+  .metric-note,.metric-good{font-size:10.5px;line-height:1.55}
+  .ad-card h4,.pair-card h4{font-size:12px;line-height:1.4}
+  .ad-card strong{font-size:18px;line-height:1.3}
   .rank-intro{padding:15px 16px}
   .rank-source-note span{font-size:11px}
   .toast{left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 76px);bottom:auto;width:auto;max-width:none}
@@ -1551,6 +1557,19 @@ body.profile-modal-active{overflow:hidden}
   .login-card{width:100%;max-width:430px;padding:30px 22px 26px;border-radius:26px;margin:0 auto;transform:translateY(-1.5vh)}
   .brand{font-size:24px;line-height:1.12}
   .login-card h1{margin-top:14px}
+}
+@media (max-width:430px){
+  .metrics,.sum-box,.pair-grid,.ad-cards,.rank-stats{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .metric,.ad-card,.pair-card{padding:14px}
+  .metric-top{font-size:10.5px;line-height:1.45;gap:6px}
+  .metric-icon{width:32px;height:32px;border-radius:10px}
+  .metric-icon .ui-icon{width:16px;height:16px}
+  .metric-value{font-size:15px;line-height:1.28;letter-spacing:-.02em}
+  .metric-note,.metric-good{font-size:10px;line-height:1.5}
+  .ad-card strong{font-size:17px}
+}
+@media (max-width:360px){
+  .metrics,.sum-box,.pair-grid,.ad-cards,.rank-stats{grid-template-columns:1fr !important}
 }
 @media (max-width:380px){
   main{padding:0 10px calc(16px + env(safe-area-inset-bottom,0px)) !important}
@@ -1596,3 +1615,85 @@ body.profile-modal-active{overflow:hidden}
   .mobile-appbar{margin-bottom:14px!important}
 }
 @media(prefers-reduced-motion:reduce){.login,.mobile-appbar{scroll-behavior:auto}}
+
+
+/* V56 — Ẩn thanh cuộn toàn website nhưng KHÔNG vô hiệu hóa cuộn/scroll-snap. */
+html, body, body * {scrollbar-width:none!important;-ms-overflow-style:none!important;}
+html::-webkit-scrollbar,body::-webkit-scrollbar,body *::-webkit-scrollbar,
+html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb,body *::-webkit-scrollbar-thumb{
+  width:0!important;height:0!important;display:none!important;background:transparent!important;
+}
+/* Giữ thao tác vuốt ngang cho bảng, menu và danh sách trên điện thoại. */
+.table-wrap,.live-wrapper,.custom-select-popover,.date-select-popover,.mobile-sidebar,.dialog-overlay{ -webkit-overflow-scrolling:touch; }
+
+/* V56 — Biểu đồ GMV hai đường: nét tím ghi nhận, nét xanh sau hoàn/hủy. */
+.gmv-trend{min-width:0;border:1px solid #e9dfff;border-radius:16px;background:linear-gradient(180deg,#fff 0%,#fdfbff 100%);padding:12px 12px 10px;overflow:visible}
+.gmv-trend-body{position:relative;min-width:0}
+.gmv-trend-svg{display:block;width:100%;height:auto;min-height:190px;overflow:visible;font-family:'Be Vietnam Pro',system-ui,sans-serif;touch-action:pan-y}
+.gmv-tick{fill:#9678c9;font-size:9.3px;font-weight:650;font-variant-numeric:tabular-nums}
+.gmv-date-tick{fill:#7963bb;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.gmv-net-line{fill:none;stroke:#16b99e;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.gmv-gross-line{fill:none;stroke:#9a5df3;stroke-width:2.6;stroke-dasharray:5 6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.gmv-trend-hit{cursor:pointer;outline:none}
+.gmv-trend-hit .gmv-gross-dot{fill:#fff;stroke:#9860ed;stroke-width:3;vector-effect:non-scaling-stroke;transition:r .15s ease}
+.gmv-trend-hit .gmv-net-dot{fill:#fff;stroke:#0eaf91;stroke-width:3;vector-effect:non-scaling-stroke;transition:r .15s ease}
+.gmv-trend-hit.is-active .gmv-gross-dot,.gmv-trend-hit:focus-visible .gmv-gross-dot{fill:#efe1ff;stroke:#8243e8;stroke-width:3.5;r:6.6}
+.gmv-trend-hit.is-active .gmv-net-dot,.gmv-trend-hit:focus-visible .gmv-net-dot{fill:#d6fff3;stroke:#0b9f86;stroke-width:3.5;r:5.9}
+.gmv-trend-hit:focus-visible .gmv-touch{stroke:#9466e8;stroke-width:1.5;stroke-dasharray:3 3}
+.gmv-trend-tooltip{position:absolute;top:7px;right:6px;width:min(248px,55%);border:1px solid #e4d4fb;border-radius:12px;background:rgba(255,255,255,.985);box-shadow:0 12px 26px rgba(69,44,112,.12);padding:11px 12px;z-index:2;font-family:'Be Vietnam Pro',system-ui,sans-serif}
+.gmv-tip-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.gmv-tip-header b{font-size:11px;color:#423064;line-height:1.5;overflow-wrap:anywhere}
+.gmv-tip-time{font-size:9px;color:#855fc7;white-space:nowrap;line-height:1.7}
+.gmv-tip-source{color:#9485ab;font-size:9.5px;line-height:1.5;margin-bottom:7px}
+.gmv-tip-row{display:flex;justify-content:space-between;gap:7px;padding:4px 0;border-top:1px dashed #f0eafa;font-size:10px;line-height:1.5}
+.gmv-tip-row span{color:#837095}.gmv-tip-row strong{font-size:10px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gmv-tip-purple{color:#8350db}.gmv-tip-refund{color:#d65f8d}.gmv-tip-green{color:#099f85}
+.gmv-tip-bottom{font-size:9px;color:#9183a8;border-top:1px dashed #ece3f9;padding-top:6px;margin-top:5px}
+.gmv-trend-legend{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px 20px;margin-top:6px;color:#7d7096;font-size:10.5px;font-weight:600}
+.gmv-trend-legend span{display:inline-flex;align-items:center;gap:7px}
+.gmv-trend-legend i{width:20px;height:0;border-top:3px solid #15bca3;display:inline-block;border-radius:4px}
+.gmv-trend-legend .gmv-legend-purple{border-top:2.4px dashed #9a5df3}
+.gmv-trend-caption{text-align:center;color:#a092b5;font-size:9.5px;line-height:1.65;margin-top:9px}
+.gmv-trend-empty{min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center;border:1px dashed #dfd2f2;border-radius:15px;color:#8275a1}
+.gmv-trend-empty .ui-icon{color:#9065db;width:26px;height:26px}.gmv-trend-empty b{color:#473268}.gmv-trend-empty span{font-size:11px;line-height:1.6}
+@media(max-width:820px){.gmv-trend{padding:10px 8px}.gmv-trend-tooltip{max-width:245px}}
+@media(max-width:590px){
+  .gmv-trend{padding:10px 9px}
+  .gmv-trend-svg{min-height:174px}
+  .gmv-trend-tooltip{position:relative;top:auto;right:auto;width:100%;max-width:none;margin:6px 0 2px;box-shadow:0 6px 15px rgba(69,44,112,.06);padding:11px 12px}
+  .gmv-tip-header b{font-size:11.5px}.gmv-tip-time{font-size:10px}
+  .gmv-tip-row span,.gmv-tip-row strong{font-size:10.8px}
+  .gmv-trend-legend{justify-content:flex-start;gap:8px 16px;font-size:10px}
+  .gmv-trend-caption{font-size:9px}
+}
+
+@media(max-width:590px){.gmv-tick{font-size:11px}.gmv-date-tick{font-size:12px}.gmv-trend-svg{min-height:175px}}
+
+
+/* V58 — Chỉ các khối KPI & phân tích Ads trong ảnh trở về bố cục V56 trên mobile.
+   Các thẻ thống kê nhanh vẫn hiển thị 2 cột như V57. */
+@media (max-width:640px){
+  .kpi-pair-grid,
+  .kpi-detail-section,
+  .ads-detail-section,
+  .ads-funnel-grid{
+    grid-template-columns:minmax(0,1fr) !important;
+    width:100%;
+  }
+  .kpi-pair-grid > .pair-card,
+  .ads-funnel-grid > .pair-card,
+  .kpi-detail-section > .panel,
+  .ads-detail-section > .panel{
+    min-width:0;
+    width:100%;
+  }
+  .kpi-pair-grid > .pair-card,
+  .ads-funnel-grid > .pair-card{
+    padding:16px;
+  }
+  .kpi-pair-grid .pair-card h4,
+  .ads-funnel-grid .pair-card h4{
+    font-size:14px;
+    line-height:1.5;
+  }
+}
