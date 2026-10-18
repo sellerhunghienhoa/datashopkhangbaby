@@ -775,20 +775,17 @@ function leaderboardEntries(scope=state.leaderScope, options={}){
   const rows=[];
   if(scope!=='creator') rows.push(...channels.values());
   if(scope!=='channel') rows.push(...creators.values());
-  const key=state.leaderSort==='orders'?'orders':'net';
+  const key=settings.sortBy==='orders'?'orders':'net';
   return rows.sort((a,b)=>(b[key]-a[key]) || (b.net-a.net) || a.name.localeCompare(b.name,'vi'));
 }
 
 
 function renderLeaders(){
-  const monthlyRows=leaderboardEntries('all',{fixedMonth:true});
+  const monthlyRows=leaderboardEntries('all',{fixedMonth:true,sortBy:'net'});
   const official=monthlyRows.filter(x=>x.kind==='channel').sort((a,b)=>b.net-a.net);
   const affiliateOnlyMonthly=monthlyRows.filter(x=>x.kind==='creator').sort((a,b)=>b.net-a.net || b.orders-a.orders || a.name.localeCompare(b.name,'vi'));
-  const topTen=(state.leaderScope==='channel'?official:state.leaderScope==='creator'?affiliateOnlyMonthly:monthlyRows).slice(0,10);
-  const detailSource=leaderboardEntries('creator',{useSelectedDate:true}).filter(x=>x.kind==='creator').sort((a,b)=>{
-    const key=state.leaderSort==='orders'?'orders':'net';
-    return (b[key]-a[key]) || (b.net-a.net) || a.name.localeCompare(b.name,'vi');
-  });
+  const topTen=monthlyRows.slice(0,10);
+  const detailSource=leaderboardEntries(state.leaderDetailScope||'creator',{useSelectedDate:true,sortBy:state.leaderDetailSort||'net'});
   const quantity=value=>Number(value||0).toLocaleString('vi-VN');
   const affiliateTotalPages=Math.max(1,Math.ceil(detailSource.length/20));
   state.leaderPage=Math.min(Math.max(1,state.leaderPage||1),affiliateTotalPages);
@@ -800,7 +797,23 @@ function renderLeaders(){
     <div class="leaders70-rank-left"><span class="leaders70-rank-number">${i+1}</span><span class="leaders70-rank-avatar">${avatarText(x.name)}</span><div class="leaders70-rank-meta"><b>${configSafe(x.name)}</b><small>${configSafe(x.subtitle)}</small></div></div>
     <div class="leaders70-rank-right"><strong>${quantity(x.orders)} đơn</strong><span>${money(x.net)}</span></div>
   </article>`).join('');
-  const detailFilterBar=`<div class="leaders61-detail-toolbar"><div class="leaders61-detail-filter-grid"><div class="filter-shell filter-shell-compact">${buildQuickRangeFilter()}</div><select class="select" aria-label="Tiêu chí xếp hạng dữ liệu đối chiếu" onchange="state.leaderSort=this.value;state.leaderPage=1;render()"><option value="net" ${state.leaderSort!=='orders'?'selected':''}>Xếp theo doanh số</option><option value="orders" ${state.leaderSort==='orders'?'selected':''}>Xếp theo số đơn</option></select></div><button class="btn ghost" onclick="exportLeaderboardCSV()">${icon('download')} Xuất bảng xếp hạng</button></div>`;
+  const detailFilterBar=`<div class="leaders78-filter-panel" aria-label="Bộ lọc dữ liệu đối chiếu">
+    <div class="leaders78-filter-intro"><span>${icon('filter')} Bộ lọc dữ liệu đối chiếu</span><small>Chỉ áp dụng cho danh sách bên dưới, không thay đổi Top 10 theo tháng</small></div>
+    <div class="leaders78-filter-grid">
+      <select class="select leaders78-scope" aria-label="Lọc nhóm tài khoản đối chiếu" onchange="state.leaderDetailScope=this.value;state.leaderPage=1;render()">
+        <option value="creator" ${(state.leaderDetailScope||'creator')==='creator'?'selected':''}>Nhà sáng tạo Affiliate</option>
+        <option value="all" ${state.leaderDetailScope==='all'?'selected':''}>Tất cả nhà sáng tạo và kênh</option>
+        <option value="channel" ${state.leaderDetailScope==='channel'?'selected':''}>Kênh LIVE chính thức</option>
+      </select>
+      ${buildQuickRangeFilter()}
+      <select class="select leaders78-sort" aria-label="Sắp xếp danh sách đối chiếu" onchange="state.leaderDetailSort=this.value;state.leaderPage=1;render()">
+        <option value="net" ${(state.leaderDetailSort||'net')==='net'?'selected':''}>Xếp theo doanh số</option>
+        <option value="orders" ${state.leaderDetailSort==='orders'?'selected':''}>Xếp theo số đơn</option>
+      </select>
+      <button type="button" class="btn ghost leaders78-date" onclick="openLeadersDatePicker()">${icon('calendar')} Chọn ngày</button>
+      <button type="button" class="btn ghost leaders78-export" onclick="exportLeaderboardCSV()">${icon('download')} Xuất bảng xếp hạng</button>
+    </div>
+  </div>`;
   return `
     <section class="leaders61-overview" aria-label="Doanh số theo nguồn">
       <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon channel">${icon('video')}</span><span>Kênh LIVE chính thức</span></div><strong>${money(official.reduce((sum,x)=>sum+x.net,0))}</strong><small>Cập nhật theo tháng hiện tại · ${quantity(official.length)} kênh có dữ liệu</small></article>
@@ -811,7 +824,7 @@ function renderLeaders(){
       ${topTen.length?`<div class="leaders70-ranklist">${featuredList}</div>`:'<div class="rank-empty">Chưa có dữ liệu phù hợp trong tháng hiện tại.</div>'}
     </section>
     <section class="leaders61-section leaders61-details">
-      <div class="leaders61-section-head"><div><span class="leaders61-section-label">DỮ LIỆU ĐỐI CHIẾU</span><h3>Chi tiết doanh số & đơn hàng</h3><p>Bảng tổng hợp các bên kéo Affiliate của kênh shop. Tối đa hiển thị 20 tài khoản mỗi trang.</p></div><span class="leaders61-badge">${quantity(detailSource.length)} tài khoản</span></div>
+      <div class="leaders61-section-head"><div><span class="leaders61-section-label">DỮ LIỆU ĐỐI CHIẾU</span><h3>Chi tiết doanh số & đơn hàng</h3><p>Bảng tổng hợp các bên kéo Affiliate của kênh shop. Tối đa 20 tài khoản trên mỗi trang.</p></div><span class="leaders61-badge">${quantity(detailSource.length)} tài khoản</span></div>
       ${detailFilterBar}
       <div class="table-wrap rank-desktop-table"><table class="leader-table rank-table"><thead><tr><th>Hạng</th><th>Nhà sáng tạo</th><th>Kênh Affiliate</th><th class="rank-th-number">Số phiên</th><th class="rank-th-number">Số đơn</th><th class="rank-th-number">GMV đã ghi nhận</th><th class="rank-th-number">Hoàn / hủy</th><th class="rank-th-number">GMV sau hoàn hủy</th></tr></thead><tbody>
         ${detailRows.map((x,i)=>`<tr><td><span class="rank-table-pos ${(detailFrom+i)===0?'is-best':''}">${detailFrom+i+1}</span></td><td><b>${configSafe(x.name)}</b></td><td><div class="mini">${configSafe(x.subtitle)}</div></td><td class="rank-th-number">${quantity(x.sessions)}</td><td class="rank-th-number">${quantity(x.orders)}</td><td class="rank-th-number">${money(x.gross)}</td><td class="rank-th-number rank-refund">${money(x.refund)}</td><td class="rank-th-number rank-net"><b>${money(x.net)}</b></td></tr>`).join('') || '<tr><td colspan="8" class="leader-empty">Không có kết quả trong khoảng ngày được chọn.</td></tr>'}
@@ -822,8 +835,18 @@ function renderLeaders(){
     </section>`;
 }
 
+    function openLeadersDatePicker(){
+      const native=document.querySelector('.leaders78-filter-grid select[data-range-select="shared"]');
+      if(!native)return;
+      const trigger=native.closest('.custom-select')?.querySelector('.custom-select-trigger');
+      if(!trigger)return;
+      closeSelectPopover();
+      showSelectPopover(native,trigger);
+      if(selectPopover)renderDateRangePanel(selectPopover,native,trigger);
+    }
+
     function exportLeaderboardCSV(){
-      const rows=leaderboardEntries();
+      const rows=leaderboardEntries(state.leaderDetailScope||'creator',{useSelectedDate:true,sortBy:state.leaderDetailSort||'net'});
       const quoted=value=>'"'+String(value??'').replace(/"/g,'""').replace(/^([=+@-])/,'\'$1')+'"';
       const headers=['Hạng','Nhà sáng tạo / Kênh','Loại','Số phiên','Số đơn','GMV đã ghi nhận','Hoàn hủy','GMV sau hoàn hủy'];
       const lines=[headers,...rows.map((x,i)=>[i+1,x.name,x.kind==='creator'?'Affiliate':'Kênh chính thức',x.sessions,x.orders,x.gross,x.refund,x.net])];
@@ -841,7 +864,7 @@ function renderLeaders(){
     }
 
     function changeLeaderPage(delta){
-      const total=Math.max(1,Math.ceil(leaderboardEntries('all').filter(x=>x.kind==='creator').length/20)||1);
+      const total=Math.max(1,Math.ceil(leaderboardEntries(state.leaderDetailScope||'creator',{useSelectedDate:true,sortBy:state.leaderDetailSort||'net'}).length/20)||1);
       state.leaderPage=Math.max(1,Math.min(total,(state.leaderPage||1)+delta));
       render();
     }

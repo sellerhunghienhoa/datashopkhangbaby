@@ -381,7 +381,7 @@
         channelFilter:'all', hostFilter:'all', statusFilter:'all',
         dateFilter:'30', dateStart:'', dateEnd:'',
         affiliateDate:'all', affiliateStart:'', affiliateEnd:'',
-        leaderScope:'all', leaderSort:'net', leaderDetailSortField:'', leaderDetailSortDirection:'',
+        leaderScope:'all', leaderSort:'net', leaderDetailScope:'creator', leaderDetailSort:'net', leaderDetailSortField:'', leaderDetailSortDirection:'',
         orderSortField:'', orderSortDirection:'',
         liveSortField:'', liveSortDirection:'', affiliateSortField:'', affiliateSortDirection:'',
         livePage:1, affiliatePage:1, leaderPage:1

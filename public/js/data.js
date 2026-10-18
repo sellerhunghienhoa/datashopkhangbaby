@@ -71,6 +71,8 @@
       dateStart:'',
       dateEnd:'',
       leaderScope:'all',
+      leaderDetailScope:'creator',
+      leaderDetailSort:'net',
       leaderSort:'net',
       leaderDetailSortField:'',
       leaderDetailSortDirection:'',
