@@ -2,11 +2,8 @@
     // Role names and feature grants are mock permissions until verified server-side.
     const TEAM_FEATURES=[
       {id:'overview',title:'Tổng quan'},
-      {id:'leaders',title:'Top Nhà sáng tạo / Kênh'},
       {id:'lives',title:'Phiên LIVE chính thức'},
-      {id:'affiliate',title:'LIVE Affiliate'},
       {id:'orders',title:'Đối soát đơn hàng'},
-      {id:'ads',title:'Phân tích quảng cáo'},
       {id:'kpi',title:'KPI Host & vận hành'},
       {id:'editHosts',title:'Gắn / sửa Host LIVE'},
       {id:'manageUsers',title:'Quản lý người dùng'},
@@ -16,9 +13,9 @@
     const ROLE_NAMES={Admin:'Quản trị viên',Ops:'Vận hành sàn',Host:'Host LIVE',Viewer:'Chỉ xem'};
     const BASE_PERMISSIONS={
       Admin:TEAM_FEATURES.map(p=>p.id),
-      Ops:['overview','leaders','lives','affiliate','orders','ads','kpi'],
-      Host:['overview','leaders','lives','kpi'],
-      Viewer:['overview','leaders']
+      Ops:['overview','lives','orders','kpi'],
+      Host:['overview','lives','kpi'],
+      Viewer:['overview']
     };
     function defaultTeamMembers(){return [
       {id:'owner',name:'ShopKhangBaby',email:'shopkhangbaby@gmail.com',role:'Admin',permissions:[...BASE_PERMISSIONS.Admin],protected:true},
@@ -286,25 +283,8 @@ function openTeamEditor(id=''){
         ${secretField('Seller Refresh Token','shop_refresh_token','Lưu mã hóa, gia hạn token trên backend')}
         ${secretField('Webhook verification secret (nếu dùng)','shop_webhook_secret','Dùng để xác minh thông báo từ TikTok, không phải trường bắt buộc cho mọi app')}
         <div class="field full api-permission-card"><b>Quyền LIVE Analytics cần kiểm tra</b><span><code>data.shop_analytics.public.read</code> — ví dụ endpoint <code>GET /analytics/202509/shop_lives/performance</code>. Ngoài dữ liệu phiên LIVE, cần đối chiếu đơn hàng và hoàn trả liên tục để ra GMV sau hoàn/hủy chính xác.</span></div>`;
-      if(state.integrationTab==='ads') return `
-        <div class="field full api-service-note"><b>TikTok Ads — TikTok API for Business</b><span>OAuth quảng cáo là hệ thống riêng với TikTok Shop. Một Business Center có thể quản lý nhiều advertiser, nên cần liên kết đúng tài khoản quảng cáo theo shop.</span></div>
-        ${connectionGroup('01 · Ứng dụng quảng cáo', 'Đăng ký ứng dụng trong TikTok Business Developers và xin quyền đọc báo cáo.')}
-        ${configInput('Ads App ID','ads_app_id','App ID / Client ID ứng dụng TikTok API for Business',true)}
-        ${configInput('Advertiser ID','ads_advertiser','ID tài khoản quảng cáo mà token được ủy quyền',true)}
-        ${configInput('Business Center ID','ads_business','Không bắt buộc nếu không sử dụng Business Center')}
-        ${configInput('Shop / kênh liên kết','ads_shop_map','Gợi ý: ShopKhangBaby hoặc Mẹ Khang Sữa')}
-        ${connectionGroup('02 · OAuth & báo cáo', 'Quyền truy cập báo cáo phụ thuộc vào app, advertiser và phạm vi được phê duyệt.')}
-        ${configInput('OAuth Redirect URI','ads_redirect','Callback HTTPS đăng ký trong TikTok Business Developers')}
-        ${configInput('Quyền Ads đã được cấp','ads_scopes','Danh mục quyền Authentication / Reporting / Advertiser phù hợp; tùy trạng thái app')}
-        ${configInput('Marketing API version','ads_version','Ví dụ v1.3; kiểm tra endpoint đang hỗ trợ với ứng dụng')}
-        ${configInput('Ads API base URL','ads_api_base','Ví dụ https://business-api.tiktok.com/open_api/v1.3')}
-        ${connectionGroup('03 · Token & quyền dữ liệu', 'Không nhúng Access-Token/App Secret vào HTML hoặc JavaScript frontend.')}
-        ${secretField('Ads App Secret','ads_app_secret','Cloudflare secret: TIKTOK_ADS_APP_SECRET')}
-        ${secretField('Ads Access Token','ads_access_token','Header Access-Token; token cần được cấp quyền với advertiser_id')}
-        ${secretField('Ads Refresh Token (nếu được cấp)','ads_refresh_token','Chỉ dùng nếu luồng OAuth/loại token hỗ trợ; xem tài liệu app thực tế')}
-        <div class="field full api-permission-card"><b>Những dữ liệu nên kiểm tra quyền</b><span>Campaign / Ad Group / Ads / Report: spend, impressions, clicks, CPC, CPM, CTR, chuyển đổi, CPA, ROAS, doanh thu quy gán. Các chỉ số GMV Max có thể yêu cầu sản phẩm API hoặc quyền bổ sung, không mặc định có trong báo cáo Ads thông thường.</span></div>`;
       if(state.integrationTab==='partner') return `
-        <div class="field full api-service-note"><b>TikTok Shop Partner Center — ủy quyền Partner riêng</b><span>Partner Center vừa là nơi tạo/quản lý ứng dụng Shop, vừa có API cho dữ liệu thuộc <b>Partner</b>. Không phải một bộ token dùng thay Seller và Ads. Các API thuộc Partner chỉ khả dụng khi loại đối tác và quyền đã được TikTok phê duyệt.</span></div>
+        <div class="field full api-service-note"><b>TikTok Shop Partner Center — ủy quyền Partner riêng</b><span>Partner Center vừa là nơi tạo/quản lý ứng dụng Shop, vừa có API cho dữ liệu thuộc <b>Partner</b>. Không thay thế Seller authorization. Các API thuộc Partner chỉ khả dụng khi loại đối tác và quyền đã được TikTok phê duyệt.</span></div>
         ${connectionGroup('01 · Hồ sơ Partner & ứng dụng', 'Đối chiếu loại đối tác/TSP/TAP/CAP... và dịch vụ đã được duyệt.')}
         ${configInput('Partner App Key','partner_app_key','App Key TikTok Shop của ứng dụng được dùng để xin quyền Partner',true)}
         ${configInput('Service ID (nếu được cấp)','partner_service_id','ID dịch vụ, có thể cần để xây dựng đường dẫn cấp quyền')}
@@ -317,23 +297,11 @@ function openTeamEditor(id=''){
         ${connectionReadOnly('Partner Authorization URL (ROW)','https://partner.tiktokshop.com/open/authorize','Đường dẫn đăng nhập cấp quyền Partner; link cuối cùng tạo theo hướng dẫn TikTok')}
         ${connectionGroup('03 · API & bí mật', 'Token của Partner phải tách biệt token Seller, đi kèm đúng loại user_type.')}
         ${configInput('Partner API base URL','partner_api_base','Thường https://open-api.tiktokglobalshop.com; tùy API được cấp')}
-        ${configInput('Đối tượng API / lĩnh vực','partner_business_category','Ví dụ Affiliate Partner; cần loại business category đã được ủy quyền')}
+        ${configInput('Đối tượng API / lĩnh vực','partner_business_category','Chỉ áp dụng nếu API Partner hiện tại yêu cầu')}
         ${secretField('Partner App Secret','partner_app_secret','Nếu dùng chung app Shop, vẫn lưu App Secret tại backend')}
         ${secretField('Partner Access Token','partner_access_token','Access token cấp theo Partner OAuth, không phải Seller token')}
         ${secretField('Partner Refresh Token','partner_refresh_token','Tách token từng chủ sở hữu và hạn dùng')}
         <div class="field full api-permission-card"><b>Kiểm tra Partner Authorization</b><span><code>GET /authorization/202405/category_assets</code> với quyền <code>partner.authorization.info</code>. Trả về tài sản đã được cấp quyền và <code>category_asset_cipher</code> cho những endpoint yêu cầu. Không suy luận loại user_type; xác minh từ phản hồi token thực tế và hướng dẫn API áp dụng.</span></div>`;
-      if(state.integrationTab==='affiliate') return `
-        <div class="field full api-service-note"><b>Affiliate — tách Seller, Creator và Partner</b><span>Dữ liệu cộng tác bán hàng có thể lấy từ Affiliate Seller, còn số liệu từng phiên LIVE của Creator bên thứ ba có thể bị giới hạn hoặc cần ủy quyền Creator/Partner riêng. Không cộng Affiliate vào KPI Host chính thức.</span></div>
-        ${connectionGroup('01 · Nguồn Affiliate Seller', 'Dùng shop đã ủy quyền và các quyền Affiliate Seller đúng phạm vi.')}
-        ${configInput('Shop Cipher cho Affiliate Seller','affiliate_shop_cipher','Shop cipher Seller đã được ủy quyền')}
-        ${configInput('Affiliate Seller scopes','affiliate_scope','Để tự đọc Cộng tác mở: seller.affiliate_collaboration.read; đơn/settlement cần quyền được cấp riêng')}
-        ${configInput('Seller Affiliate API version','affiliate_version','Tùy phiên bản endpoint được bật')}
-        ${connectionGroup('02 · Affiliate Partner / Creator', 'Chỉ cần nếu muốn dữ liệu chi tiết của đối tác ngoài phạm vi Seller.')}
-        ${configInput('Creator Open ID / Creator ID','affiliate_creator_id','Dùng định danh từ API được ủy quyền, không suy luận từ @username')}
-        ${configInput('Category Asset Cipher (Partner)','affiliate_category_cipher','Lấy từ Partner Center nếu Affiliate Partner API yêu cầu')}
-        ${configInput('Nguồn dữ liệu Affiliate','affiliate_source','Seller Affiliate / Partner Affiliate / Creator Analytics')}
-        ${secretField('Creator Token (nếu được ủy quyền)','affiliate_creator_token','Không dùng Seller token thay cho token Creator')}
-        <div class="field full api-permission-card"><b>Tỷ lệ Cộng tác mở chỉ đọc từ TikTok</b><span>Scope <code>seller.affiliate_collaboration.read</code>: <code>POST /affiliate_seller/202412/open_collaborations/search</code> để đọc mức hiện hành. Không cho nhập lại tỷ lệ bằng tay. Hoa hồng đã quyết toán phải dựa trên dữ liệu đơn/statement và quyền Finance được cấp; bản demo không hiển thị giá trị suy đoán.</span></div>`;
       return `
         ${connectionGroup('01 · Firebase Authentication', 'Đăng nhập Google thực và xác thực Firebase ID token tại Cloudflare Worker.')}
         ${configInput('Firebase Project ID','firebase_project','ID dự án Firebase công khai')}

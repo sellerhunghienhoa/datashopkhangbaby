@@ -37,36 +37,6 @@ CREATE TABLE IF NOT EXISTS live_sessions (
 CREATE INDEX IF NOT EXISTS idx_lives_started ON live_sessions(started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_lives_channel ON live_sessions(channel_username, started_at DESC);
 
-CREATE TABLE IF NOT EXISTS affiliate_sessions (
-  session_id TEXT PRIMARY KEY,
-  creator_id TEXT,
-  creator_handle TEXT,
-  creator_name TEXT,
-  started_at TEXT NOT NULL,
-  gross_gmv_vnd INTEGER NOT NULL DEFAULT 0,
-  net_gmv_vnd INTEGER NOT NULL DEFAULT 0,
-  order_count INTEGER NOT NULL DEFAULT 0,
-  estimated_commission_vnd INTEGER NOT NULL DEFAULT 0,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_affiliate_started ON affiliate_sessions(started_at DESC);
-
-CREATE TABLE IF NOT EXISTS ads_campaigns (
-  advertiser_id TEXT NOT NULL,
-  campaign_id TEXT NOT NULL,
-  campaign_name TEXT NOT NULL,
-  report_date TEXT NOT NULL,
-  spend_vnd INTEGER NOT NULL DEFAULT 0,
-  attributed_revenue_vnd INTEGER NOT NULL DEFAULT 0,
-  impressions INTEGER NOT NULL DEFAULT 0,
-  clicks INTEGER NOT NULL DEFAULT 0,
-  orders INTEGER NOT NULL DEFAULT 0,
-  payload_json TEXT,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY(advertiser_id, campaign_id, report_date)
-);
-CREATE INDEX IF NOT EXISTS idx_ads_report_date ON ads_campaigns(report_date DESC);
-
 -- Lưu biến động theo đơn để đối soát hoàn/hủy; tránh sửa trực tiếp số tổng phiên.
 CREATE TABLE IF NOT EXISTS order_reconciliations (
   order_id TEXT PRIMARY KEY,

@@ -9,7 +9,7 @@
     const STORAGE_DEFAULT_CONFIG = Object.freeze({enabled:true,threshold:85,target:70,scanMinutes:360,logs:true,cache:true,snapshots:true,logsDays:7,cacheDays:3,snapshotsDays:3});
     const STORAGE_SAMPLE_DEFAULTS = Object.freeze({
       firestore:{capacity:1000,used:790},
-      d1:{capacity:600,used:535},
+      d1:{capacity:600,used:420},
       r2:{capacity:1200,used:720}
     });
     function storageClampNumber(v, min, max, fallback){
@@ -55,24 +55,6 @@
       const over=STORAGE_META.filter(x=>storagePercent(sample.sources[x.id])>=cfg.threshold);
       const last=sample.lastClean ? `Dọn gần nhất: ${escapeTeam(sample.lastClean)}` : 'Chưa thực hiện dọn thử';
       return `
-        <section class="panel storage-simple-panel">
-          <div class="storage-simple-top">
-            <div><h3>${icon('database','heading-icon')} Dung lượng bộ nhớ</h3><p class="mini">Ba nguồn dữ liệu đang theo dõi</p></div>
-            <span class="pill purple">Số liệu mẫu</span>
-          </div>
-          <div class="storage-sources storage-simple-sources">
-            ${STORAGE_META.map(meta=>{
-              const row=sample.sources[meta.id], percent=storagePercent(row), level=storageLevel(percent);
-              return `<div class="storage-source">
-                <div class="storage-source-head"><h4>${escapeTeam(meta.label)}</h4><span class="pill ${level==='critical'?'bad':level==='warning'?'warn':'ok'}">${percent}%</span></div>
-                <div class="storage-amount">${storageNumber(row.used)} <span>/ ${storageNumber(row.capacity)}</span></div>
-                <div class="storage-progress ${level}" role="progressbar" aria-label="Dung lượng ${escapeTeam(meta.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${Math.min(percent,100)}%"></span></div>
-              </div>`;
-            }).join('')}
-          </div>
-          <div class="storage-simple-status"><span class="pill ${over.length?'warn':'ok'}">${over.length?`${over.length} nguồn đã chạm ngưỡng ${cfg.threshold}%`:'Dung lượng đang trong ngưỡng an toàn'}</span><span class="mini">${last}</span></div>
-        </section>
-
         <section class="panel storage-simple-panel storage-simple-controls">
           <div class="storage-simple-top">
             <div><h3>${icon('settings','heading-icon')} Tự động dọn dẹp</h3><p class="mini">Chỉ dọn cache, nhật ký kỹ thuật cũ và bản đồng bộ tạm</p></div>
@@ -119,6 +101,25 @@
             </details>
           </form>
         </section>
+        <section class="panel storage-simple-panel">
+          <div class="storage-simple-top">
+            <div><h3>${icon('database','heading-icon')} Dung lượng bộ nhớ</h3><p class="mini">Ba nguồn dữ liệu đang theo dõi</p></div>
+            <span class="pill purple">Số liệu mẫu</span>
+          </div>
+          <div class="storage-sources storage-simple-sources storage-merged-sources">
+            ${STORAGE_META.map(meta=>{
+              const row=sample.sources[meta.id], percent=storagePercent(row), level=storageLevel(percent);
+              return `<div class="storage-source storage-merged-source">
+                <div class="storage-source-head"><h4>${escapeTeam(meta.label)}</h4><span class="pill ${level==='critical'?'bad':level==='warning'?'warn':'ok'}">${percent}%</span></div>
+                <div class="storage-amount">${storageNumber(row.used)} <span>/ ${storageNumber(row.capacity)}</span></div>
+                <div class="storage-progress ${level}" role="progressbar" aria-label="Dung lượng ${escapeTeam(meta.label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${Math.min(percent,100)}%"></span></div>
+              </div>`;
+            }).join('')}
+          </div>
+          <div class="storage-simple-status"><span class="pill ${over.length?'warn':'ok'}">${over.length?`${over.length} nguồn đã chạm ngưỡng ${cfg.threshold}%`:'Dung lượng đang trong ngưỡng an toàn'}</span><span class="mini">${last}</span></div>
+        </section>
+
+
         <div class="storage-simple-disclaimer">${icon('info','heading-icon')} Đây là <b>bản demo</b>. Dung lượng và thao tác dọn đang được mô phỏng; không kết nối và không xóa dữ liệu Firebase hoặc Cloudflare thật. Gói miễn phí còn có giới hạn đọc/ghi và yêu cầu ngoài dung lượng lưu trữ.</div>`;
     }
     function storageLog(msg){

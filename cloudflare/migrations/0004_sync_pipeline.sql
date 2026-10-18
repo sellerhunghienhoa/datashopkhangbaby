@@ -1,7 +1,7 @@
 -- V50: cấu hình một lần, chống trùng, ghi nhận lần nhập/sync.
 CREATE TABLE IF NOT EXISTS sync_runs (
   run_id TEXT PRIMARY KEY,
-  source TEXT NOT NULL CHECK(source IN ('seller','affiliate','ads','orders')),
+  source TEXT NOT NULL CHECK(source IN ('seller','orders')),
   status TEXT NOT NULL CHECK(status IN ('success','failed')),
   item_count INTEGER NOT NULL DEFAULT 0,
   started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -31,9 +31,8 @@
     function selectedRangeLabel(native, full=false){
       const current=native.selectedOptions[0]?.textContent || 'Chọn';
       if(!native.dataset.rangeSelect || native.value!=='custom')return current;
-      const affiliate=native.dataset.rangeSelect==='affiliate';
-      const from=parseInputDate(affiliate?state.affiliateStart:state.dateStart);
-      const to=parseInputDate(affiliate?state.affiliateEnd:state.dateEnd);
+      const from=parseInputDate(state.dateStart);
+      const to=parseInputDate(state.dateEnd);
       if(!from || !to)return current;
       const pad=value=>String(value).padStart(2,'0');
       const fullDate=d=>`${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
@@ -51,9 +50,8 @@
       popup.setAttribute('role','dialog');
       popup.setAttribute('aria-label','Chọn khoảng ngày tối đa 3 tháng');
       popup.querySelector('.date-range-panel')?.remove();
-      const isAffiliate=native.dataset.rangeSelect==='affiliate';
-      const savedStart=isAffiliate?state.affiliateStart:state.dateStart;
-      const savedEnd=isAffiliate?state.affiliateEnd:state.dateEnd;
+      const savedStart=state.dateStart;
+      const savedEnd=state.dateEnd;
       let from=(native.value==='custom' && savedStart)?parseInputDate(savedStart):null;
       let to=(native.value==='custom' && savedEnd)?parseInputDate(savedEnd):null;
       const today=getDefaultMaxDate();
@@ -142,8 +140,7 @@
       panel.querySelector('.range-cancel').addEventListener('click',()=>closeSelectPopover(true));
       panel.querySelector('.range-apply').addEventListener('click',()=>{
         if(!from||!to||!isWithinThreeMonths(from,to))return;
-        if(isAffiliate){state.affiliateStart=toInputDate(from);state.affiliateEnd=toInputDate(to);}
-        else{state.dateStart=toInputDate(from);state.dateEnd=toInputDate(to);}
+        state.dateStart=toInputDate(from);state.dateEnd=toInputDate(to);
         closeSelectPopover();
         native.value='custom';
         native.dispatchEvent(new Event('change',{bubbles:true}));
@@ -377,14 +374,12 @@
     function resetBrowsingFilters(redraw=true){
       closeSelectPopover();
       Object.assign(state,{
-        search:'', affiliateSearch:'',
+        search:'',
         channelFilter:'all', hostFilter:'all', statusFilter:'all',
         dateFilter:'30', dateStart:'', dateEnd:'',
-        affiliateDate:'all', affiliateStart:'', affiliateEnd:'',
-        leaderScope:'all', leaderSort:'net', leaderDetailScope:'creator', leaderDetailSort:'net', leaderDetailSortField:'', leaderDetailSortDirection:'',
         orderSortField:'', orderSortDirection:'',
-        liveSortField:'', liveSortDirection:'', affiliateSortField:'', affiliateSortDirection:'',
-        livePage:1, affiliatePage:1, leaderPage:1
+        liveSortField:'', liveSortDirection:'',
+        livePage:1
       });
       applyPresetDateRange('30');
       // Chặn form restoration của Safari trước khi React-less UI được render lại.
@@ -410,13 +405,8 @@
     // Giữ nguyên DOM của input để bàn phím, focus, IME và vị trí con trỏ không bị mất.
     function updateSearchResults(input, scope='main'){
       if(!input)return;
-      if(scope==='affiliate'){
-        state.affiliateSearch=input.value;
-        state.affiliatePage=1;
-      }else{
-        state.search=input.value;
-        state.livePage=1;
-      }
+      state.search=input.value;
+      state.livePage=1;
       // Khi đang nhập có dấu/IME, đợi đến khi tổ hợp ký tự kết thúc.
       if(input.isComposing)return;
       const content=document.getElementById('content');
@@ -437,11 +427,8 @@
       const pageY=window.scrollY;
       let html = '';
       if(state.currentTab==='overview') html = renderOverview();
-      if(state.currentTab==='leaders') html = renderLeaders();
       if(state.currentTab==='lives') html = renderLives();
-      if(state.currentTab==='affiliate') html = renderAffiliate();
       if(state.currentTab==='orders') html = renderOrders();
-      if(state.currentTab==='ads') html = renderAds();
       if(state.currentTab==='kpi') html = renderKPI();
       if(state.currentTab==='team') html = renderTeam();
       if(state.currentTab==='connect') html = renderConnect();
@@ -495,7 +482,7 @@
       }
       if(state.currentTab===tab){closeMobileMenu();return;}
       // Không giữ cách sắp xếp khi rời tab, sẽ về thứ tự mặc định nếu mở lại.
-      Object.assign(state,{liveSortField:'',liveSortDirection:'',affiliateSortField:'',affiliateSortDirection:'',orderSortField:'',orderSortDirection:'',leaderDetailSortField:'',leaderDetailSortDirection:''});
+      Object.assign(state,{liveSortField:'',liveSortDirection:'',orderSortField:'',orderSortDirection:'',leaderDetailSortField:'',leaderDetailSortDirection:''});
       closeMobileMenu();
       window.scrollTo(0,0);
       state.currentTab = tab;

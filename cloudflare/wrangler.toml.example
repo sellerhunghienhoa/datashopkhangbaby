@@ -18,4 +18,4 @@ binding = "EXPORTS"
 bucket_name = "shopkhangbaby-exports"
 
 [triggers]
-crons = ["*/15 * * * *"]  # Chỉ kiểm tra Partner token; TikTok Seller/Ads polling cần adapter riêng
+crons = ["*/15 * * * *"]  # Chỉ kiểm tra Partner token; Seller LIVE/Orders cần adapter riêng

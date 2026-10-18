@@ -22,7 +22,5 @@ window.ShopKhangBabyApi = Object.freeze({
   activateUser(token,code,role){return this.request('/api/v1/activation-requests/approve',token,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,role})});},
   syncStatus(token){return this.request('/api/v1/sync/status',token);},
   getLiveSessions(token,page=1,limit=100){return this.request(`/api/v1/live-sessions?page=${page}&limit=${limit}`,token);},
-  getAffiliateSessions(token,page=1,limit=100){return this.request(`/api/v1/affiliate-sessions?page=${page}&limit=${limit}`,token);},
-  getAdsCampaigns(token,page=1,limit=100){return this.request(`/api/v1/ads-campaigns?page=${page}&limit=${limit}`,token);},
   getPartnerTokenStatus(token){return this.request('/api/v1/partner-token/status',token);}
 });

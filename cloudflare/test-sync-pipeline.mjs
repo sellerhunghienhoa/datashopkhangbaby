@@ -18,10 +18,6 @@ test('upsert LIVE dùng đúng khóa session_id và timestamp',()=>{
  assert.match(stmt.sql,/excluded.source_updated_at>=live_sessions.source_updated_at/);
  assert.equal(stmt.params[0],seller.session_id);
 });
-test('upsert Ads theo advertiser+campaign+date',()=>{
- const row=normalize('ads',{advertiser_id:'a',campaign_id:'b',campaign_name:'Test',report_date:'2026-10-18',spend_vnd:100,attributed_revenue_vnd:700,impressions:5000,clicks:10,orders:1});
- assert.match(statement(fakeDb,'ads',row).sql,/ON CONFLICT\(advertiser_id,campaign_id,report_date\)/);
-});
 test('orders không ghi đè bản ghi mới bởi timestamp cũ',()=>{
  const row=normalize('orders',{order_id:'order1',channel_username:'mekhangsua',order_status:'paid',gross_amount_vnd:1000,refunded_amount_vnd:0,last_source_update:'2026-10-18T01:00:00Z'});
  assert.match(statement(fakeDb,'orders',row).sql,/excluded.last_source_update >= order_reconciliations.last_source_update/);

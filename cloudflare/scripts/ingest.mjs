@@ -1,5 +1,5 @@
 // V50 — Chạy trong Cloud Shell/CI/connector đã được cấp quyền.
-// SOURCE=seller|affiliate|ads|orders INPUT=./snapshot.json
+// SOURCE=seller|orders INPUT=./snapshot.json
 // WORKER_URL=https://... SYNC_INGEST_KEY=... node scripts/ingest.mjs
 // Không đưa SYNC_INGEST_KEY hoặc TikTok token vào frontend.
 import {readFile} from 'node:fs/promises';
@@ -8,7 +8,7 @@ const source=process.env.SOURCE||'';
 const path=process.env.INPUT||'';
 const url=process.env.WORKER_URL||'';
 const key=process.env.SYNC_INGEST_KEY||'';
-if(!['seller','affiliate','ads','orders'].includes(source)||!path||!/^https:\/\//.test(url)||key.length<30){
+if(!['seller','orders'].includes(source)||!path||!/^https:\/\//.test(url)||key.length<30){
   console.error('Thiếu SOURCE, INPUT, WORKER_URL (https) hoặc SYNC_INGEST_KEY (>=30 ký tự)');
   process.exit(2);
 }

@@ -5,10 +5,10 @@
           <div class="panel-head"><div><h3>${icon('cloud','heading-icon')} Kết nối nguồn dữ liệu thật</h3><div class="mini">Firebase Authentication • Cloudflare Worker • Cloudflare D1</div></div><span class="pill ok">Live backend</span></div>
           <div id="liveSyncStatus" class="v50-status" aria-live="polite">Đang đọc trạng thái từ Cloudflare Worker...</div>
           <div class="manual-sync-row"><div class="manual-sync-info"><b>Làm mới dữ liệu trên màn hình</b><span class="mini">Không gọi lại TikTok; lấy bản ghi mới nhất đã được lưu trong D1.</span></div><div class="manual-sync-actions"><button class="btn primary" type="button" onclick="window.ShopKhangBabyLive.refreshData().then(()=>toast('Đã tải lại dữ liệu từ D1')).catch(e=>toast(e.message,'error'))">${icon('refresh')} Tải lại dữ liệu</button><button class="btn ghost" type="button" onclick="window.ShopKhangBabyLive.refreshStatus()">Kiểm tra nguồn</button></div></div>
-          <div class="note" style="margin-top:14px"><b>Cấu hình một lần tại Cloud Shell/Cloudflare:</b> Worker URL, Firebase và các secret không cần nhập lại trên giao diện. Bản ghi LIVE/Order/Ads có khóa chống trùng và ghi đè snapshot mới nhất. <b>Chưa tự lấy TikTok API</b> cho đến khi bạn cấp OAuth/scope và triển khai adapter phù hợp.</div>
+          <div class="note" style="margin-top:14px"><b>Cấu hình một lần tại Cloud Shell/Cloudflare:</b> Worker URL, Firebase và các secret không cần nhập lại trên giao diện. Bản ghi LIVE và đơn hàng có khóa chống trùng và ghi đè snapshot mới nhất. <b>Chưa tự lấy TikTok API</b> cho đến khi bạn cấp OAuth/scope và triển khai adapter phù hợp.</div>
         </section>
         <section class="panel"><div class="panel-head"><div><h3>Hướng dẫn quản trị kết nối</h3><div class="mini">Không hiển thị và không lưu token thật trên trình duyệt</div></div></div>
-          <div class="note"><b>TikTok Seller:</b> cần cấp quyền LIVE Analytics / Orders / Refunds.<br><br><b>TikTok Ads:</b> cần cấp quyền Advertiser / Reporting.<br><br><b>Partner Center:</b> quản lý token tại Cloudflare Worker, có tác vụ làm mới token riêng.<br><br><b>Cloud Shell:</b> chạy script <code>cloudflare/scripts/ingest.mjs</code> để nhập batch đã chuẩn hóa, không nhập lại ở web.<br><br><b>Chống trùng:</b> LIVE dùng session ID, Affiliate dùng session ID, Orders dùng Order ID, Ads dùng Advertiser + Campaign + ngày.</div>
+          <div class="note"><b>TikTok Seller:</b> cần cấp quyền LIVE Analytics / Orders / Refunds.<br><br><b>Partner Center:</b> quản lý token tại Cloudflare Worker, có tác vụ làm mới token riêng.<br><br><b>Cloud Shell:</b> chạy script <code>cloudflare/scripts/ingest.mjs</code> để nhập batch đã chuẩn hóa, không nhập lại ở web.<br><br><b>Chống trùng:</b> LIVE dùng Session ID, Orders dùng Order ID.</div>
         </section>`;
       return `
         <section class="panel" style="margin-bottom:16px">
@@ -16,7 +16,7 @@
           <div class="allowlist-grid">
             ${OFFICIAL_CHANNELS.map(ch=>`<div class="allowlist-card"><span class="allowlist-mark">${icon('check')}</span><div><b>${ch}</b><div class="mini">Phiên LIVE chính thức được đưa vào Tổng quan, Đối soát LIVE, KPI Host</div></div><span class="pill ok">Được phép</span></div>`).join('')}
           </div>
-          <div class="note" style="margin-top:14px">Khi kết nối thật, đối chiếu <b>creator account ID do TikTok trả về</b> với hai tài khoản đã xác thực; không chỉ lọc theo chuỗi username ở giao diện. Những LIVE Affiliate từ nhà sáng tạo khác sẽ vào <b>tab LIVE Affiliate</b>, không cộng vào KPI Host. Một số dữ liệu Affiliate có thể chỉ có ở cấp đơn hàng/đối tác.</div>
+          <div class="note" style="margin-top:14px">Khi kết nối thật, đối chiếu <b>creator account ID do TikTok trả về</b> với hai tài khoản đã xác thực; không chỉ lọc theo chuỗi username ở giao diện. Không đưa LIVE của các tài khoản ngoài danh sách hai kênh vào báo cáo nội bộ.</div>
         </section>
         <section class="panel" style="margin-bottom:16px">
           <div class="panel-head"><div><h3>${icon('refresh','heading-icon')} Đồng bộ dữ liệu tự động</h3><div class="mini">Cấu hình cách dashboard sẽ đồng bộ 24/24 khi đã triển khai Workers Cron, webhook và API thực</div></div><span class="pill warn">Chưa kết nối backend</span></div>
@@ -37,17 +37,14 @@
           <details class="manual-sync-log"><summary>Lịch sử đồng bộ (${state.syncHistory.length})</summary><ul class="log-list" id="syncLog">${state.syncHistory.length?state.syncHistory.map(x=>`<li>${configSafe(x)}</li>`).join(''):'<li>Chưa có lịch sử mô phỏng trong lượt mở này.</li>'}</ul></details>
         </section>
         <section class="panel api-console" aria-label="Thiết lập API TikTok">
-          <div class="panel-head"><div><h3>${icon('plug','heading-icon')} Cấu hình API cho từng nguồn dữ liệu</h3><div class="mini">Seller, Ads, Partner Center và Affiliate cần cấp quyền riêng trước khi triển khai thật.</div></div><span class="pill purple">Chỉ quản trị viên</span></div>
+          <div class="panel-head"><div><h3>${icon('plug','heading-icon')} Cấu hình API cho từng nguồn dữ liệu</h3><div class="mini">Chỉ duy trì kết nối cho hai kênh LIVE chính thức, đối soát và hạ tầng.</div></div><span class="pill purple">Chỉ quản trị viên</span></div>
           <div class="api-connector-overview">
             <div class="api-overview-item"><span class="api-source-icon">${icon('shopping-bag')}</span><div><b>Seller</b><small>LIVE · Đơn hàng · Hoàn trả</small></div><span class="api-pending">Chưa kết nối</span></div>
-            <div class="api-overview-item"><span class="api-source-icon">${icon('chart')}</span><div><b>Ads</b><small>Chi phí · ROAS · Báo cáo</small></div><span class="api-pending">Chưa kết nối</span></div>
             <div class="api-overview-item"><span class="api-source-icon">${icon('users')}</span><div><b>Partner Center</b><small>Đối tác · API scopes · Assets</small></div><span class="api-pending">Chưa kết nối</span></div>
           </div>
           <div class="config-tabs api-config-tabs" role="tablist" aria-label="Chọn nguồn kết nối">
             <button type="button" class="${state.integrationTab==='shop'?'selected':''}" onclick="state.integrationTab='shop';render()">${icon('shopping-bag')} Seller</button>
-            <button type="button" class="${state.integrationTab==='ads'?'selected':''}" onclick="state.integrationTab='ads';render()">${icon('chart')} TikTok Ads</button>
             <button type="button" class="${state.integrationTab==='partner'?'selected':''}" onclick="state.integrationTab='partner';render()">${icon('users')} Partner Center</button>
-            <button type="button" class="${state.integrationTab==='affiliate'?'selected':''}" onclick="state.integrationTab='affiliate';render()">${icon('link')} Affiliate</button>
             <button type="button" class="${state.integrationTab==='infra'?'selected':''}" onclick="state.integrationTab='infra';render()">${icon('cloud')} Firebase / Cloudflare</button>
           </div>
           <div class="api-security-banner">${icon('shield')} <div><b>Chưa cấp quyền TikTok — đang dùng dữ liệu mô phỏng</b><span>Chỉ điền mã định danh, URL hoặc scopes không bí mật để xem thử. Không nhập App Secret, Access Token hoặc Refresh Token trong file HTML. OAuth thật cần Cloudflare Worker bảo mật.</span></div></div>
@@ -75,17 +72,13 @@
     }
     function integrationHelpHtml(){
       if(state.integrationTab==='shop') return `<ol><li>Tạo ứng dụng TikTok Shop trong Partner Center, bật các scope Seller cần thiết.</li><li>Thiết lập Redirect URI HTTPS và Seller authorization flow; mã ủy quyền được xử lý ở backend.</li><li>Đổi code sang token qua <code>auth.tiktok-shops.com</code>; lấy Shop Cipher từ API Get Authorized Shops.</li><li>Đọc LIVE Analytics, đơn và hoàn trả; so ID Creator với hai kênh chính thức.</li></ol><a href="https://partner.tiktokshop.com/docv2/page/create-your-app" target="_blank" rel="noopener noreferrer">Tài liệu tạo ứng dụng TikTok Shop ↗</a>`;
-      if(state.integrationTab==='ads') return `<ol><li>Tạo app trong TikTok for Business, được duyệt quyền báo cáo.</li><li>Ủy quyền advertiser, nhận Access Token ở backend; kiểm tra danh sách Advertiser ID được phép.</li><li>Đọc campaign, ad group, ads và reporting; lưu dữ liệu phân tích theo advertiser riêng.</li></ol><a href="https://business-api.tiktok.com/" target="_blank" rel="noopener noreferrer">TikTok API for Business ↗</a>`;
       if(state.integrationTab==='partner') return `<ol><li>Hoàn thành hồ sơ Partner Center và xác nhận dịch vụ/loại Partner được duyệt.</li><li>Thiết lập Partner authorization (khác Seller authorization) và lấy token Partner.</li><li>Cấp refresh token ban đầu cho Worker bằng Wrangler Secret; Cron sẽ tự gia hạn và thay thế token đã mã hóa trong D1.</li><li>Gọi Get Authorized Category Assets nếu quyền <code>partner.authorization.info</code> có hiệu lực.</li><li>Lưu category_asset_cipher cùng loại business category, sau đó mới dùng API Partner được cấp.</li></ol><a href="https://partner.tiktokshop.com/docv2/page/get-authorized-category-assets-202405" target="_blank" rel="noopener noreferrer">Get Authorized Category Assets ↗</a>`;
-      if(state.integrationTab==='affiliate') return `<ol><li>Dùng quyền Affiliate Seller để xem giao dịch thuộc shop.</li><li>Muốn xem Creator Partner ngoài shop, kiểm tra bổ sung quyền Partner/Creator tương ứng.</li><li>Đọc mức Cộng tác mở với <code>seller.affiliate_collaboration.read</code>; chưa có quyền sẽ chỉ hiện GMV, đơn và hoàn/hủy, không có ô nhập tay hoặc hoa hồng dự đoán.</li></ol><a href="https://partner.tiktokshop.com/docv2/api-document" target="_blank" rel="noopener noreferrer">TikTok Shop Affiliate API Reference ↗</a>`;
       return `<ol><li>Triển khai Firebase Auth Google, cấu hình domain được cấp phép.</li><li>Triển khai Worker kiểm tra Firebase ID token và quyền quản trị ở D1.</li><li>Đăng ký callback OAuth TikTok theo từng nguồn, bảo vệ state/nonce và lưu token phía backend.</li><li>Cấu hình Cron/Queue, mã hóa token và nhật ký đồng bộ.</li></ol><span>Xem file <code>docs/API_CONNECTIONS.md</code> trong ZIP V43 để triển khai từng bước.</span>`;
     }
     function checkConnectionConfigDemo(){
       const fields={
         shop:[['shop_app_key','App Key'],['shop_cipher','Shop Cipher'],['shop_redirect','OAuth Redirect URI'],['shop_scopes','Scopes đã cấp']],
-        ads:[['ads_app_id','Ads App ID'],['ads_advertiser','Advertiser ID'],['ads_redirect','OAuth Redirect URI'],['ads_scopes','Quyền báo cáo']],
         partner:[['partner_app_key','Partner App Key'],['partner_redirect','Partner Redirect URI'],['partner_scopes','Partner Scopes'],['partner_category_cipher','Category Asset Cipher (nếu endpoint yêu cầu)']],
-        affiliate:[['affiliate_shop_cipher','Shop Cipher'],['affiliate_scope','Affiliate Seller Scopes']],
         infra:[['firebase_project','Firebase Project ID'],['firebase_auth','Firebase Auth Domain'],['backend_url','Worker API URL']]
       };
       const form=document.getElementById('integrationForm');

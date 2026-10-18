@@ -65,7 +65,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/v1/health') return json({ ok: true, service: 'DATA SHOPKHANGBABY API', mode: 'live-backend', tiktok_connected: false }, 200, cors);
     // Import từ Cloud Shell / connector server. Không dùng Firebase browser token để import.
-    const ingestMatch=url.pathname.match(/^\/api\/v1\/ingest\/(seller|affiliate|ads|orders)$/);
+    const ingestMatch=url.pathname.match(/^\/api\/v1\/ingest\/(seller|orders)$/);
     if(ingestMatch){
       if(request.method!=='POST')return json({error:'Chỉ POST'},405,cors);
       // Không cho API key ingestion đi qua cross-site browser requests.
@@ -110,7 +110,7 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
    return json(await listPending(env.DB),200,cors);
   }catch(e){return json({error:String(e.message||'Lỗi kích hoạt').slice(0,200)},400,cors);}
 }
-    if (!['/api/v1/live-sessions', '/api/v1/affiliate-sessions', '/api/v1/ads-campaigns', '/api/v1/sync/status', '/api/v1/me', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
+    if (!['/api/v1/live-sessions', '/api/v1/sync/status', '/api/v1/me', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
     try {
       const access = await requireUser(request, env);
       if (access.error) return json({ error: access.error }, access.status, cors);
@@ -135,12 +135,6 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
         return json({result:result.reason, status:await getPartnerTokenStatus(env)}, result.ok?200:409,cors);
       }
       if (request.method !== 'GET') return json({error:'Method not allowed'},405,cors);
-      // Phân quyền bắt buộc ở backend: ẩn tab frontend không phải là biện pháp bảo mật.
-      // Viewer/Host chỉ được đọc LIVE chính thức; báo cáo Affiliate và Ads cần Ops/Admin.
-      if ((url.pathname === '/api/v1/affiliate-sessions' || url.pathname === '/api/v1/ads-campaigns')
-          && !['Admin', 'Ops'].includes(access.user.role)) {
-        return json({ error: 'Tài khoản không có quyền đọc nhóm dữ liệu này' }, 403, cors);
-      }
       const limit = positiveInt(url.searchParams.get('limit'));
       const offset = (positiveInt(url.searchParams.get('page'), 1, 10000) - 1) * limit;
       if (url.pathname === '/api/v1/live-sessions') {
@@ -154,12 +148,6 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
         const result = await env.DB.prepare(sql).bind(...vals).all();
         return json({ items: result.results || [], page: Math.floor(offset / limit) + 1, limit }, 200, cors);
       }
-      if (url.pathname === '/api/v1/affiliate-sessions') {
-        const result = await env.DB.prepare('SELECT session_id, creator_id, creator_handle, creator_name, started_at, gross_gmv_vnd, net_gmv_vnd, order_count FROM affiliate_sessions ORDER BY started_at DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
-        return json({ items: result.results || [], page: Math.floor(offset / limit) + 1, limit }, 200, cors);
-      }
-      const result = await env.DB.prepare('SELECT advertiser_id, campaign_id, campaign_name, report_date, spend_vnd, attributed_revenue_vnd, impressions, clicks, orders FROM ads_campaigns ORDER BY report_date DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
-      return json({ items: result.results || [], page: Math.floor(offset / limit) + 1, limit }, 200, cors);
     } catch (e) {
       console.error('API error:', e.message);
       return json({ error: 'Lỗi máy chủ. Kiểm tra cấu hình Worker/D1.' }, 500, cors);

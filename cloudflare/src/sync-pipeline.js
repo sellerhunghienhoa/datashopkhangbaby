@@ -1,7 +1,7 @@
 // V50 — import an toàn từ đồng bộ API phía server hoặc Cloud Shell.
 // D1 lưu snapshot qua UPSERT; KHÔNG cộng dồn GMV khi nhập lại cùng bản ghi.
 export const OFFICIAL_HANDLES = Object.freeze(['shopkhangbaby', 'mekhangsua']);
-export const SOURCES = Object.freeze(['seller', 'affiliate', 'ads', 'orders']);
+export const SOURCES = Object.freeze(['seller', 'orders']);
 const nonblank = (v, name, max=128) => {
   if (typeof v !== 'string' && typeof v !== 'number') throw new Error(`${name} không hợp lệ`);
   const s=String(v).trim();
@@ -42,19 +42,6 @@ export function normalize(source,raw){
       gross_gmv_vnd:gross,canceled_refunded_vnd:refunded,net_gmv_vnd:net,sold_units:sold,net_units:netUnits,
       source_updated_at:iso(raw.source_updated_at,'source_updated_at'),reconciled_at:raw.reconciled_at?iso(raw.reconciled_at,'reconciled_at'):null};
   }
-  if(source==='affiliate'){
-    const gross=money(raw.gross_gmv_vnd,'gross_gmv_vnd');const net=money(raw.net_gmv_vnd,'net_gmv_vnd');
-    if(net>gross)throw new Error('GMV sau hoàn/hủy vượt GMV');
-    return {session_id:nonblank(raw.session_id,'session_id'),creator_id:optional(raw.creator_id,128),
-      creator_handle:optional(raw.creator_handle,128),creator_name:optional(raw.creator_name,255),
-      started_at:iso(raw.started_at,'started_at'),gross_gmv_vnd:gross,net_gmv_vnd:net,
-      order_count:money(raw.order_count,'order_count')};
-  }
-  if(source==='ads')return {advertiser_id:nonblank(raw.advertiser_id,'advertiser_id'),
-    campaign_id:nonblank(raw.campaign_id,'campaign_id'),campaign_name:nonblank(raw.campaign_name,'campaign_name',255),
-    report_date:nonblank(raw.report_date,'report_date',10),spend_vnd:money(raw.spend_vnd,'spend_vnd'),
-    attributed_revenue_vnd:money(raw.attributed_revenue_vnd,'attributed_revenue_vnd'),
-    impressions:money(raw.impressions,'impressions'),clicks:money(raw.clicks,'clicks'),orders:money(raw.orders,'orders')};
   if(source==='orders'){
     const gross=money(raw.gross_amount_vnd,'gross_amount_vnd');
     const refund=money(raw.refunded_amount_vnd,'refunded_amount_vnd');
@@ -81,19 +68,6 @@ export function statement(db,source,row){
     WHERE live_sessions.source_updated_at IS NULL OR excluded.source_updated_at IS NULL OR excluded.source_updated_at>=live_sessions.source_updated_at`)
     .bind(row.session_id,row.channel_username,row.title,row.host_name,row.started_at,row.ended_at,
       row.gross_gmv_vnd,row.canceled_refunded_vnd,row.net_gmv_vnd,row.sold_units,row.net_units,row.source_updated_at,row.reconciled_at);
-  if(source==='affiliate')return db.prepare(`INSERT INTO affiliate_sessions (session_id,creator_id,creator_handle,creator_name,started_at,gross_gmv_vnd,net_gmv_vnd,order_count)
-    VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET creator_id=excluded.creator_id,
-    creator_handle=excluded.creator_handle,creator_name=excluded.creator_name,started_at=excluded.started_at,
-    gross_gmv_vnd=excluded.gross_gmv_vnd,net_gmv_vnd=excluded.net_gmv_vnd,order_count=excluded.order_count,
-    updated_at=CURRENT_TIMESTAMP`).bind(row.session_id,row.creator_id,row.creator_handle,row.creator_name,
-      row.started_at,row.gross_gmv_vnd,row.net_gmv_vnd,row.order_count);
-  if(source==='ads')return db.prepare(`INSERT INTO ads_campaigns (advertiser_id,campaign_id,campaign_name,report_date,spend_vnd,attributed_revenue_vnd,impressions,clicks,orders)
-    VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(advertiser_id,campaign_id,report_date) DO UPDATE SET
-    campaign_name=excluded.campaign_name,spend_vnd=excluded.spend_vnd,
-    attributed_revenue_vnd=excluded.attributed_revenue_vnd,impressions=excluded.impressions,
-    clicks=excluded.clicks,orders=excluded.orders,updated_at=CURRENT_TIMESTAMP`)
-    .bind(row.advertiser_id,row.campaign_id,row.campaign_name,row.report_date,row.spend_vnd,
-      row.attributed_revenue_vnd,row.impressions,row.clicks,row.orders);
   return db.prepare(`INSERT INTO order_reconciliations
     (order_id,live_session_id,channel_username,order_status,gross_amount_vnd,refunded_amount_vnd,final_amount_vnd,last_source_update)
     VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(order_id) DO UPDATE SET
@@ -112,7 +86,7 @@ export async function importBatch(env,source,items,batchKey){
   const unique = new Set();
   const clean = items.map(row=>{
     const parsed=normalize(source,row);
-    const key=source==='seller'?parsed.session_id:source==='affiliate'?parsed.session_id:source==='orders'?parsed.order_id:`${parsed.advertiser_id}/${parsed.campaign_id}/${parsed.report_date}`;
+    const key=source==='seller'?parsed.session_id:parsed.order_id;
     if(unique.has(key)) throw new Error(`Trùng ID trong cùng batch: ${key}`);
     unique.add(key);return parsed;
   });

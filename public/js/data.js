@@ -19,11 +19,8 @@
     };
     const TITLE_MAP = {
       overview:'Tổng quan hệ thống',
-      leaders:'Top Nhà sáng tạo / Kênh bán chạy',
       lives:'Danh sách phiên LIVE đã kết thúc',
-      affiliate:'LIVE Affiliate – Đối tác bán hàng',
       orders:'Đối soát đơn hàng sau LIVE',
-      ads:'Phân tích chiến dịch quảng cáo',
       kpi:'KPI Host & vận hành',
       team:'Phân quyền tài khoản',
       connect:'Kết nối nguồn dữ liệu',
@@ -41,17 +38,6 @@
       {id:'7696750035085220616', title:'Siêu Deal HIKID', start:'11:29 15/10/2026', duration:'7h42min', hours:7.7, gross:113200000, refund:3850000, orders:406, canceled:15, status:'Đã chốt tạm', host:'Dung', channel:'Mẹ Khang Sữa'}
     ];
 
-    // BẢN DEMO: các đối tác bên dưới là dữ liệu giả lập, không phải tài khoản thực của shop.
-    // Dữ liệu Affiliate không được tính vào doanh số hoặc KPI của hai kênh LIVE chính thức.
-    const demoAffiliateLives = [
-      {id:'DEMO-AFF-001',creator:'Đối tác Affiliate A',handle:'@affiliate_demo_a',title:'Giới thiệu sản phẩm chăm sóc bé',date:'17/10/2026',start:'14:10 17/10/2026',duration:'2 giờ 15 phút',gross:18600000,refund:810000,orders:72,returned:3,products:6,status:'Chờ đối soát'},
-      {id:'DEMO-AFF-002',creator:'Đối tác Affiliate B',handle:'@affiliate_demo_b',title:'Mẹ và bé – sản phẩm nổi bật',date:'17/10/2026',start:'09:30 17/10/2026',duration:'3 giờ 5 phút',gross:24500000,refund:1350000,orders:95,returned:5,products:9,status:'Đang theo dõi'},
-      {id:'DEMO-AFF-003',creator:'Đối tác Affiliate C',handle:'@affiliate_demo_c',title:'Ưu đãi đồ dùng gia đình',date:'16/10/2026',start:'19:05 16/10/2026',duration:'1 giờ 50 phút',gross:9600000,refund:320000,orders:37,returned:2,products:4,status:'Chờ đối soát'},
-      {id:'DEMO-AFF-004',creator:'Đối tác Affiliate D',handle:'@affiliate_demo_d',title:'Phiên giới thiệu sản phẩm',date:'16/10/2026',start:'11:25 16/10/2026',duration:'4 giờ 20 phút',gross:35200000,refund:1850000,orders:131,returned:7,products:11,status:'Đang theo dõi'},
-      {id:'DEMO-AFF-005',creator:'Đối tác Affiliate A',handle:'@affiliate_demo_a',title:'Livestream tối 15/10',date:'15/10/2026',start:'20:15 15/10/2026',duration:'2 giờ 40 phút',gross:12300000,refund:450000,orders:50,returned:2,products:5,status:'Theo dõi hoàn trả'},
-      {id:'DEMO-AFF-006',creator:'Đối tác Affiliate E',handle:'@affiliate_demo_e',title:'Khám phá sản phẩm mới',date:'15/10/2026',start:'08:10 15/10/2026',duration:'3 giờ 30 phút',gross:28100000,refund:1240000,orders:106,returned:4,products:7,status:'Chờ đối soát'}
-    ];
-
     let state = {
       currentTab:'overview',
       role:'Admin',
@@ -59,23 +45,10 @@
       search:'',
       hostFilter:'all',
       channelFilter:'all',
-      affiliateDate:'all',
-      affiliateStart:'',
-      affiliateEnd:'',
-      affiliateSearch:'',
-      affiliatePage:1,
-      affiliateSortField:'',
-      affiliateSortDirection:'',
       statusFilter:'all',
       dateFilter:'30',
       dateStart:'',
       dateEnd:'',
-      leaderScope:'all',
-      leaderDetailScope:'creator',
-      leaderDetailSort:'net',
-      leaderSort:'net',
-      leaderDetailSortField:'',
-      leaderDetailSortDirection:'',
       orderSortField:'',
       orderSortDirection:'',
       livePage:1,
