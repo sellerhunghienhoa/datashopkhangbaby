@@ -64,7 +64,11 @@
         <p class="mini" style="margin-top:14px">Thay vai trò sẽ nạp quyền mặc định; bạn có thể tiếp tục tùy chỉnh từng mục.</p>
       </div>`;
       document.getElementById('teamModal').classList.remove('hidden');
-      document.getElementById('teamNameInput').focus();
+      // Safari iOS: không tự focus ô nhập khi mở popup. Tránh tự mở bàn phím
+      // và phóng to viewport trước khi người dùng có ý định nhập.
+      if(!window.matchMedia('(pointer:coarse), (max-width:820px)').matches){
+        document.getElementById('teamNameInput').focus({preventScroll:true});
+      }
     }
     function presetRolePermissions(role){
       const set=new Set(BASE_PERMISSIONS[role]||BASE_PERMISSIONS.Viewer);

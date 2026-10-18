@@ -1,3 +1,28 @@
+## V61 — Giao diện Affiliate, favicon và Top xếp hạng
+
+- Nút **Xuất CSV Affiliate** nằm cùng hàng với dropdown **chọn thời gian** ở mobile, tìm kiếm ở hàng trên.
+- Favicon, apple-touch-icon, logo đăng nhập và sidebar được lấy từ **logo Khang Baby người dùng cung cấp**. Dùng ảnh vuông đầy đủ, không cắt nội dung logo.
+- Thiết kế tab **Top Nhà sáng tạo / Kênh** mới: Top 3, tổng GMV hai nguồn tách biệt, thanh xếp hạng và chi tiết mở rộng trên mobile. Giữ nguyên dữ liệu/logic bộ lọc/xuất CSV.
+- Ảnh logo nằm tại `public/assets/` và có thể thay lại mà không ảnh hưởng mã nguồn JS.
+- Bản demo HTML có nhúng nội dung ảnh để mở trực tiếp; bản ZIP lưu file riêng cho Firebase Hosting.
+- Dữ liệu demo chưa là dữ liệu TikTok thực.
+
+## Cập nhật V60 — Sửa lỗi nhập liệu và popup iPhone
+
+- Ô tìm kiếm tên/ID phiên LIVE và tìm kiếm Affiliate không còn khởi tạo lại toolbar theo từng ký tự; bàn phím, focus và con trỏ giữ nguyên.
+- Cập nhật bảng kết quả ngay khi nhập, không chạy hiệu ứng chuyển tab mỗi lần gõ.
+- Trên iPhone, các ô nhập/chọn dùng cỡ chữ ít nhất 16px để Safari không tự phóng to.
+- Khi mở popup Thêm/Sửa tài khoản con trên mobile, không tự động focus ô tên; hiệu ứng popup chỉ trượt nhẹ, không scale.
+- Đây là bản demo, chưa thực hiện cấp quyền Firebase thật.
+
+## V59 — Chuyển động toàn website (18/10/2026)
+
+- Chuyển tab: thanh lọc và các nhóm nội dung xuất hiện bằng hiệu ứng mờ + trượt nhẹ 0,22–0,31 giây, các thẻ thống kê vào lần lượt.
+- Menu mobile, dropdown, hộp thoại phân quyền và xác nhận được chuyển động mềm; popup hồ sơ giữ animation V40.
+- Nút, tab, card có trạng thái bấm/hover nhẹ, không đổi kích thước bố cục.
+- Giữ cấu trúc và tính toán từ V58. Không animate lại khi đồng bộ, gõ tìm kiếm, hoặc cập nhật số liệu.
+- Tôn trọng `prefers-reduced-motion: reduce`. Bản HTML là demo; Firebase Authentication/API TikTok Live vẫn cần cấu hình và cấp quyền thật.
+
 # DATA SHOPKHANGBABY — V58
 
 ## Điều chỉnh riêng mobile (theo góp ý của bạn)

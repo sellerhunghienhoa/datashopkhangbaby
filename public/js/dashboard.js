@@ -232,7 +232,7 @@
       if(['lives','orders','kpi','overview'].includes(state.currentTab)){
         toolbar.innerHTML = `
           <div class="filter-grid ${state.currentTab==='lives'?'is-live-page':''}">
-            ${state.currentTab==='lives'?'':`<input type="search" placeholder="Tìm tên LIVE / ID phiên / kênh..." value="${state.search.replace(/"/g,'&quot;')}" oninput="state.search=this.value;state.livePage=1;render()">`}
+            ${state.currentTab==='lives'?'':`<input type="search" placeholder="Tìm tên LIVE / ID phiên / kênh..." value="${configSafe(state.search)}" oninput="updateSearchResults(this,'main')" oncompositionend="updateSearchResults(this,'main')">`}
             ${state.currentTab==='lives'?`<select class="select" aria-label="Lọc kênh LIVE chính thức" onchange="state.channelFilter=this.value;state.livePage=1;render()"><option value="all" ${state.channelFilter==='all'?'selected':''}>Cả 2 kênh LIVE</option>${OFFICIAL_CHANNELS.map(ch=>`<option value="${ch}" ${state.channelFilter===ch?'selected':''}>${ch}</option>`).join('')}</select>`:''}
             ${buildQuickRangeFilter()}
             ${state.currentTab==='lives'?'':`<select class="select" aria-label="Lọc kênh LIVE chính thức" onchange="state.channelFilter=this.value;state.livePage=1;render()"><option value="all" ${state.channelFilter==='all'?'selected':''}>Cả 2 kênh LIVE</option>${OFFICIAL_CHANNELS.map(ch=>`<option value="${ch}" ${state.channelFilter===ch?'selected':''}>${ch}</option>`).join('')}</select>`}
@@ -266,8 +266,9 @@
           <div class="toolbar-group page-actions"><button class="btn ghost" onclick="exportLeaderboardCSV()">${icon('download')} Xuất bảng xếp hạng</button></div>`;
       } else if(state.currentTab==='affiliate'){
         toolbar.innerHTML = `
-          <div class="toolbar-group">
-            <input type="search" aria-label="Tìm đối tác hoặc phiên Affiliate" placeholder="Tìm đối tác, tài khoản, phiên LIVE..." value="${configSafe(state.affiliateSearch)}" oninput="state.affiliateSearch=this.value;state.affiliatePage=1;render()">
+          <div class="affiliate61-toolbar">
+            <input class="affiliate61-search" type="search" aria-label="Tìm đối tác hoặc phiên Affiliate" placeholder="Tìm đối tác, tài khoản, phiên LIVE..." value="${configSafe(state.affiliateSearch)}" oninput="updateSearchResults(this,'affiliate')" oncompositionend="updateSearchResults(this,'affiliate')">
+            <div class="affiliate61-actions">
             <select class="select" aria-label="Lọc thời gian Affiliate" data-range-select="affiliate" onchange="setAffiliateDateFilter(this.value)">
               <option value="all" ${state.affiliateDate==='all'?'selected':''}>Tất cả thời gian</option>
               <option value="1" ${state.affiliateDate==='1'?'selected':''}>Hôm nay</option>
@@ -277,8 +278,9 @@
               <option value="90" ${state.affiliateDate==='90'?'selected':''}>90 ngày</option>
               <option value="custom" ${state.affiliateDate==='custom'?'selected':''}>Chọn ngày</option>
             </select>
-          </div>
-          <div class="toolbar-group"><button class="btn ghost" onclick="exportAffiliateCSV()">${icon('download')} Xuất CSV Affiliate</button></div>`;
+            <button class="btn ghost affiliate61-export" onclick="exportAffiliateCSV()">${icon('download')} Xuất CSV Affiliate</button>
+            </div>
+          </div>`;
       } else if(state.currentTab==='ads'){
         toolbar.innerHTML = `
           <div class="filter-grid is-three">
@@ -793,63 +795,47 @@
       const maxValue=Math.max(1,...rows.map(x=>state.leaderSort==='orders'?x.orders:x.net));
       const criterion=state.leaderSort==='orders'?'số đơn sau hoàn/hủy':'GMV sau hoàn/hủy';
       const quantity=value=>Number(value||0).toLocaleString('vi-VN');
-      const title=x=>x.kind==='creator'?'Nhà sáng tạo Affiliate':'Kênh LIVE chính thức';
-      const topCard=(label,items,kind)=>{
-        const first=items[0];
-        return `<div class="rank-feature rank-feature-${kind}">
-          <div class="rank-feature-top"><span class="rank-feature-icon">${icon(kind==='creator'?'users':'video')}</span><span class="rank-feature-kicker">${label}</span></div>
-          <div class="rank-feature-name">${first?configSafe(first.name):'Chưa có dữ liệu'}</div>
-          <div class="rank-feature-money">${first?money(first.net):'—'}</div>
-          <div class="rank-feature-sub">${first?`${quantity(first.orders)} đơn hàng · ${quantity(first.sessions)} phiên LIVE`:'Chưa có phiên trong khoảng thời gian đang chọn'}</div>
-        </div>`;
-      };
+      const result=x=>state.leaderSort==='orders'?`${quantity(x.orders)} đơn`:money(x.net);
+      const type=x=>x.kind==='creator'?'Nhà sáng tạo Affiliate':'Kênh LIVE chính thức';
+      const medal=x=>x===1?'🥇':x===2?'🥈':'🥉';
+      const podium=rows.slice(0,3).map((x,i)=>`
+        <article class="leaders61-podium-card leaders61-place-${i+1} ${x.kind==='creator'?'is-creator':'is-channel'}">
+          <div class="leaders61-podium-head"><span class="leaders61-medal" aria-label="Hạng ${i+1}">${medal(i+1)}</span><span class="rank-type-badge ${x.kind}">${x.kind==='creator'?'Affiliate':'Chính thức'}</span></div>
+          <strong class="leaders61-podium-name" title="${configSafe(x.name)}">${configSafe(x.name)}</strong>
+          <span class="leaders61-podium-handle">${configSafe(x.subtitle)}</span>
+          <strong class="leaders61-podium-value">${result(x)}</strong>
+          <span class="leaders61-podium-meta">${quantity(x.orders)} đơn · ${quantity(x.sessions)} phiên LIVE</span>
+        </article>`).join('');
       return `
-        <section class="rank-intro">
-          <div class="rank-intro-main">
-            <div class="rank-kicker">${icon('target')} XẾP HẠNG HIỆU SUẤT LIVE</div>
-            <h2>Ai đang bán hàng hiệu quả nhất?</h2>
-            <p>So sánh Nhà sáng tạo Affiliate và hai kênh LIVE chính thức theo doanh số sau hoàn hủy hoặc số đơn bán ra.</p>
+        <section class="leaders61-hero">
+          <div class="leaders61-hero-copy"><span class="leaders61-eyebrow">${icon('target')} BẢNG XẾP HẠNG BÁN HÀNG</span><h2>Top Nhà sáng tạo & Kênh</h2><p>Nhìn nhanh ai đang dẫn đầu, so sánh theo ${criterion} và kiểm tra chi tiết doanh số sau hoàn/hủy.</p>
+            <div class="leaders61-hero-tags"><span>${quantity(rows.length)} đối tượng</span><span>Không cộng trùng GMV giữa hai nguồn</span></div>
           </div>
-          <span class="rank-demo-label">${icon('info')} Dữ liệu minh họa</span>
+          <div class="leaders61-hero-highlight"><span>Đứng đầu ${state.leaderSort==='orders'?'số đơn':'doanh số'}</span><b>${leader?configSafe(leader.name):'Chưa có dữ liệu'}</b><strong>${leader?result(leader):'—'}</strong></div>
         </section>
-
-        <section class="rank-stats" aria-label="Tổng quan xếp hạng">
-          <div class="rank-stat"><div class="rank-stat-top"><span>Kênh LIVE chính thức</span><span class="rank-stat-icon channel">${icon('video')}</span></div><strong>${money(officialNet)}</strong><span>${official.length} kênh đang có dữ liệu</span></div>
-          <div class="rank-stat"><div class="rank-stat-top"><span>Nhà sáng tạo Affiliate</span><span class="rank-stat-icon creator">${icon('users')}</span></div><strong>${money(affiliateNet)}</strong><span>${affiliate.length} nhà sáng tạo đang có dữ liệu</span></div>
-          <div class="rank-stat"><div class="rank-stat-top"><span>Đứng đầu ${state.leaderSort==='orders'?'số đơn':'doanh số'}</span><span class="rank-stat-icon winner">${icon('target')}</span></div><strong class="rank-stat-person">${leader?configSafe(leader.name):'Chưa có dữ liệu'}</strong><span>${leader?(state.leaderSort==='orders'?`${quantity(leader.orders)} đơn sau hoàn/hủy`:money(leader.net)):'Thử đổi bộ lọc thời gian'}</span></div>
+        <section class="leaders61-overview" aria-label="Doanh số theo nguồn">
+          <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon channel">${icon('video')}</span><span>Kênh LIVE chính thức</span></div><strong>${money(officialNet)}</strong><small>${quantity(official.length)} kênh có dữ liệu</small></article>
+          <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon creator">${icon('users')}</span><span>Nhà sáng tạo Affiliate</span></div><strong>${money(affiliateNet)}</strong><small>${quantity(affiliate.length)} nhà sáng tạo có dữ liệu</small></article>
         </section>
-
-        <section class="rank-main-grid">
-          <div class="rank-panel rank-chart-panel">
-            <div class="rank-panel-heading"><div><h3>Bảng xếp hạng</h3><p>Sắp xếp theo ${criterion}; mỗi thanh thể hiện giá trị so với hạng đầu.</p></div><span class="rank-count">${rows.length} đối tượng</span></div>
-            ${rows.length?`<div class="rank-bars">${rows.map((x,i)=>{
-              const current=state.leaderSort==='orders'?x.orders:x.net;
-              const percent=Math.max(0,Math.min(100,current/maxValue*100));
-              return `<div class="rank-bar-item">
-                <div class="rank-bar-header">
-                  <span class="rank-bar-index ${i===0?'first':''}">${i+1}</span>
-                  <div class="rank-bar-person"><b>${configSafe(x.name)}</b><span>${configSafe(x.subtitle)} · ${title(x)}</span></div>
-                  <strong class="rank-bar-value">${state.leaderSort==='orders'?`${quantity(x.orders)} đơn`:money(x.net)}</strong>
-                </div>
-                <div class="rank-bar-track" role="img" aria-label="${configSafe(x.name)}: ${state.leaderSort==='orders'?`${quantity(x.orders)} đơn`:money(x.net)}"><div class="rank-bar-fill ${x.kind==='creator'?'creator':'channel'}" style="width:${percent.toFixed(1)}%"></div></div>
-              </div>`;
-            }).join('')}</div>`:`<div class="rank-empty">${icon('calendar')}<b>Chưa có dữ liệu trong khoảng ngày này</b><span>Hãy thử khoảng thời gian dài hơn để xem bảng xếp hạng.</span></div>`}
-            <div class="rank-legend"><span><i class="rank-legend-dot channel"></i>Kênh chính thức</span><span><i class="rank-legend-dot creator"></i>Affiliate</span></div>
-          </div>
-          <aside class="rank-side">
-            <div class="rank-panel-heading rank-side-heading"><div><h3>Nổi bật theo nhóm</h3><p>Người dẫn đầu ở từng nguồn doanh số</p></div></div>
-            ${topCard('TOP KÊNH CHÍNH THỨC',official,'channel')}
-            ${topCard('TOP NHÀ SÁNG TẠO',affiliate,'creator')}
-            <div class="rank-source-note">${icon('info')}<span><b>Lưu ý đối soát:</b> GMV kênh chính thức và GMV Affiliate có thể trùng đơn. Hai nguồn được hiển thị để so sánh, <b>không cộng gộp</b> thành doanh thu shop.</span></div>
-          </aside>
+        <section class="leaders61-section" aria-label="Ba vị trí cao nhất">
+          <div class="leaders61-section-head"><div><span class="leaders61-section-label">THÀNH TÍCH NỔI BẬT</span><h3>Top 3 dẫn đầu</h3><p>Xếp theo ${criterion}</p></div><span class="leaders61-badge">${rows.length} kết quả</span></div>
+          ${rows.length?`<div class="leaders61-podium">${podium}</div>`:'<div class="rank-empty">Chưa có dữ liệu phù hợp với bộ lọc.</div>'}
         </section>
-
-        <section class="rank-panel rank-detail-panel">
-          <div class="rank-panel-heading"><div><h3>Chi tiết doanh số & đơn hàng</h3><p>Đầy đủ giá trị tiền, số phiên và số đơn sau hoàn hủy.</p></div><span class="rank-count">${rows.length} kết quả</span></div>
+        <section class="leaders61-section leaders61-list-section">
+          <div class="leaders61-section-head"><div><span class="leaders61-section-label">SO SÁNH TRỰC QUAN</span><h3>Bảng xếp hạng</h3><p>Thanh dài hơn tương ứng với ${criterion} lớn hơn</p></div><div class="leaders61-legend"><span><i class="rank-legend-dot channel"></i>Chính thức</span><span><i class="rank-legend-dot creator"></i>Affiliate</span></div></div>
+          ${rows.length?`<div class="leaders61-rows">${rows.map((x,i)=>{
+            const current=state.leaderSort==='orders'?x.orders:x.net;
+            const pct=Math.max(0,Math.min(100,current/maxValue*100));
+            return `<div class="leaders61-row"><span class="leaders61-index ${i===0?'first':''}">${i+1}</span><div class="leaders61-row-body"><div class="leaders61-row-top"><div class="leaders61-row-name"><b>${configSafe(x.name)}</b><small>${type(x)} · ${quantity(x.sessions)} phiên</small></div><strong>${result(x)}</strong></div><div class="leaders61-track" role="img" aria-label="${configSafe(x.name)}: ${result(x)}"><span class="${x.kind==='creator'?'creator':'channel'}" style="width:${pct.toFixed(1)}%"></span></div></div></div>`;
+          }).join('')}</div>`:'<div class="rank-empty">Không có kết quả. Bạn hãy đổi bộ lọc thời gian hoặc nguồn dữ liệu.</div>'}
+        </section>
+        <section class="leaders61-section leaders61-details">
+          <div class="leaders61-section-head"><div><span class="leaders61-section-label">DỮ LIỆU ĐỐI CHIẾU</span><h3>Chi tiết doanh số & đơn hàng</h3><p>Không dùng GMV của hai nguồn để cộng thành tổng doanh thu shop</p></div><span class="leaders61-badge">${quantity(rows.length)} đối tượng</span></div>
           <div class="table-wrap rank-desktop-table"><table class="leader-table rank-table"><thead><tr><th>Hạng</th><th>Nhà sáng tạo / Kênh</th><th>Loại</th><th class="rank-th-number">Số phiên</th><th class="rank-th-number">Số đơn</th><th class="rank-th-number">${reportGmvSortHeader('leaders','gross','GMV đã ghi nhận')}</th><th class="rank-th-number">Giá trị hoàn/hủy</th><th class="rank-th-number">${reportGmvSortHeader('leaders','net','GMV sau hoàn hủy')}</th></tr></thead><tbody>
             ${detailRows.map((x,i)=>`<tr><td><span class="rank-table-pos ${i===0?'is-best':''}">${i+1}</span></td><td><b>${configSafe(x.name)}</b><div class="mini">${configSafe(x.subtitle)}</div></td><td><span class="rank-type-badge ${x.kind}">${x.kind==='creator'?'Affiliate':'Chính thức'}</span></td><td class="rank-th-number">${quantity(x.sessions)}</td><td class="rank-th-number">${quantity(x.orders)}</td><td class="rank-th-number">${money(x.gross)}</td><td class="rank-th-number rank-refund">${money(x.refund)}</td><td class="rank-th-number rank-net"><b>${money(x.net)}</b></td></tr>`).join('') || '<tr><td colspan="8" class="leader-empty">Không có kết quả trong khoảng ngày được chọn.</td></tr>'}
           </tbody></table></div>
-          <div class="rank-mobile-cards">${detailRows.map((x,i)=>`<div class="rank-mobile-card"><div class="rank-mobile-card-head"><span class="rank-table-pos ${i===0?'is-best':''}">${i+1}</span><div><b>${configSafe(x.name)}</b><span>${configSafe(x.subtitle)}</span></div><span class="rank-type-badge ${x.kind}">${x.kind==='creator'?'Affiliate':'Chính thức'}</span></div><div class="rank-mobile-card-net"><span>GMV sau hoàn hủy</span><strong>${money(x.net)}</strong></div><div class="rank-mobile-card-data"><div><span>GMV đã ghi nhận</span><b>${money(x.gross)}</b></div><div><span>Hoàn / hủy</span><b>${money(x.refund)}</b></div><div><span>Số đơn</span><b>${quantity(x.orders)}</b></div><div><span>Số phiên</span><b>${quantity(x.sessions)}</b></div></div></div>`).join('')||'<div class="rank-empty">Không có kết quả trong khoảng ngày được chọn.</div>'}</div>
+          <div class="leaders61-mobile-details">${detailRows.map((x,i)=>`<details class="leaders61-mobile-detail"><summary><span class="leaders61-index">${i+1}</span><span class="leaders61-mobile-name"><b>${configSafe(x.name)}</b><small>${x.kind==='creator'?'Affiliate':'Chính thức'}</small></span><strong>${money(x.net)}</strong><span class="leaders61-toggle-icon">⌄</span></summary><div class="leaders61-detail-grid"><div><span>GMV đã ghi nhận</span><b>${money(x.gross)}</b></div><div><span>Hoàn / hủy</span><b>${money(x.refund)}</b></div><div><span>Số đơn</span><b>${quantity(x.orders)}</b></div><div><span>Số phiên</span><b>${quantity(x.sessions)}</b></div></div></details>`).join('')||'<div class="rank-empty">Không có kết quả.</div>'}</div>
+          <div class="leaders61-footnote">${icon('info')} Các khoản GMV từ LIVE chính thức và Affiliate có thể quy gán cùng đơn hàng. Dữ liệu được hiển thị riêng để so sánh, không cộng gộp.</div>
         </section>`;
     }
 

@@ -368,6 +368,28 @@
       const hasSystemAccess = canAccessTab('team') || canAccessTab('connect') || canAccessTab('storage');
       document.getElementById('systemNavHeading').classList.toggle('system-section-hidden', !hasSystemAccess);
 
+      renderCurrentTabContent();
+    }
+
+    // V60: chỉ cập nhật khu vực kết quả; KHÔNG dựng lại ô tìm kiếm/toolbar.
+    // Giữ nguyên DOM của input để bàn phím, focus, IME và vị trí con trỏ không bị mất.
+    function updateSearchResults(input, scope='main'){
+      if(!input)return;
+      if(scope==='affiliate'){
+        state.affiliateSearch=input.value;
+        state.affiliatePage=1;
+      }else{
+        state.search=input.value;
+        state.livePage=1;
+      }
+      // Khi đang nhập có dấu/IME, đợi đến khi tổ hợp ký tự kết thúc.
+      if(input.isComposing)return;
+      const content=document.getElementById('content');
+      if(content)content.classList.remove('view-enter');
+      renderCurrentTabContent();
+    }
+
+    function renderCurrentTabContent(){
       let html = '';
       if(state.currentTab==='overview') html = renderOverview();
       if(state.currentTab==='leaders') html = renderLeaders();
@@ -391,14 +413,37 @@
       if(state.currentTab==='connect' && window.SHOPKHANGBABY_CONFIG?.mode==='live') window.ShopKhangBabyLive?.refreshStatus();
     }
 
+    // V59: Chỉ chuyển động khi đổi tác vụ, không chạy lại animation mỗi lần gõ hoặc đồng bộ.
+    let viewEnterTimer = null;
+    function animateViewEntrance(){
+      const content=document.getElementById('content');
+      const toolbar=document.getElementById('toolbar');
+      if(!content || !toolbar || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+      clearTimeout(viewEnterTimer);
+      content.classList.remove('view-enter');
+      toolbar.classList.remove('view-enter');
+      // Khởi động lại hiệu ứng sau khi nội dung tab mới đã được render.
+      void content.offsetWidth;
+      content.classList.add('view-enter');
+      toolbar.classList.add('view-enter');
+      viewEnterTimer=window.setTimeout(()=>{
+        content.classList.remove('view-enter');
+        toolbar.classList.remove('view-enter');
+        viewEnterTimer=null;
+      },560);
+    }
+
     function go(tab){
       if(!canAccessTab(tab)){
         toast('Tài khoản hiện tại không có quyền truy cập mục này');
         return;
       }
+      if(state.currentTab===tab){closeMobileMenu();return;}
+      closeMobileMenu();
+      window.scrollTo(0,0);
       state.currentTab = tab;
       render();
-      closeMobileMenu();
+      animateViewEntrance();
     }
 
     function updateHost(id, host){
@@ -430,6 +475,7 @@
       localStorage.setItem('dskh_signed_in', '1');
       syncAuthView();
       render();
+      animateViewEntrance();
     }
 
     function signOut(){
