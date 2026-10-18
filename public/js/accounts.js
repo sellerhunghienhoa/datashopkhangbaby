@@ -35,15 +35,15 @@
     function teamRoleBadge(role){return `<span class="pill ${role==='Admin'?'purple':role==='Ops'?'ok':'warn'}">${ROLE_NAMES[role]||'Chỉ xem'}</span>`;}
 
 // V69: phần duyệt token server-side, tách khỏi danh sách user demo.
+
 function activation69Panel(){
   const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
-  return `<section class="panel activation69"><div class="panel-head"><div><h3>Kích hoạt tài khoản mới</h3><div class="mini">Nhập mã do người đăng ký gửi. Mã chỉ dùng một lần, hết hạn sau 7 ngày.</div></div></div>
+  return `<section class="panel activation69"><div class="panel-head"><div><h3>Kích hoạt tài khoản mới</h3><div class="mini">Nhập mã do người đăng ký gửi. Kích hoạt chỉ xác nhận tài khoản, chưa phân quyền nâng cao.</div></div></div>
    <form class="activation69-form" onsubmit="approveAccount69(event)">
-     <label>Mã kích hoạt<input id="activation69Token" autocomplete="off" placeholder="KB-…" required spellcheck="false"/></label>
-     <label>Phân quyền<select id="activation69Role" aria-label="Vai trò sau kích hoạt"><option value="Viewer">Chỉ xem</option><option value="Host">Host LIVE</option><option value="Ops">Vận hành sàn</option></select></label>
+     <label>Mã kích hoạt<input id="activation69Token" autocomplete="off" placeholder="Nhập token kích hoạt ở đây ..." required spellcheck="false"/></label>
      <button class="btn primary" type="submit">Kích hoạt</button>
    </form>
-   <p class="activation69-demo">${live?'Vai trò mặc định khi đăng ký: Chỉ xem. Admin có thể duyệt Host hoặc Vận hành, không thể cấp quyền Admin bằng mã kích hoạt.':'Chế độ DEMO: mã mô phỏng, không tạo tài khoản Firebase hoặc cấp quyền thực tế.'}</p>
+   <p class="activation69-demo">${live?'Sau khi kích hoạt, tài khoản sẽ tự xuất hiện trong mục “Quản lý người dùng & phân quyền” với vai trò mặc định <b>Chỉ xem</b>. Sau đó bạn mới đổi quyền tại đó.':'Chế độ DEMO: kích hoạt chỉ thêm tài khoản vào danh sách quản lý người dùng với quyền mặc định Chỉ xem.'}</p>
    <button type="button" class="btn ghost" onclick="loadActivationRequests69()">${live?'Xem yêu cầu đang chờ':'Xem yêu cầu demo'}</button>
    <div id="activation69List" class="activation69-list" aria-live="polite"></div>
   </section>`;
@@ -57,23 +57,30 @@ async function loadActivationRequests69(){
     el.innerHTML=(list||[]).slice(0,50).map(x=>`<div class="activation69-person"><div><b>${escapeTeam(x.display_name||x.name||'Người đăng ký')}</b><div class="mini">${escapeTeam(x.email)}</div></div><span>${live?(x.email_verified?'Email đã xác minh':'Chưa xác minh email'):'Đang chờ • demo'}</span></div>`).join('')||'<p class="mini">Chưa có yêu cầu chờ duyệt.</p>';
   }catch(e){el.textContent='Không tải được yêu cầu: '+e.message;}
 }
+
 async function approveAccount69(event){
   event.preventDefault();
   const code=document.getElementById('activation69Token').value.trim().toUpperCase();
-  const role=document.getElementById('activation69Role').value;
   if(!hasPermission('manageUsers'))return toast('Bạn không có quyền duyệt người dùng','error');
   const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
   try{
     if(live){
-      await window.ShopKhangBabyApi.activateUser(await window.shopKhangBabyGetIdToken(),code,role);
-      toast('Đã kích hoạt tài khoản; người dùng cần tải lại trang để nhận quyền mới.','success');
+      await window.ShopKhangBabyApi.activateUser(await window.shopKhangBabyGetIdToken(),code,'Viewer');
+      toast('Đã kích hoạt tài khoản với vai trò mặc định Chỉ xem. Bạn có thể đổi quyền ở danh sách người dùng.','success');
     }else{
       const list=window.auth69GetDemoRequests?.()||[];
       const request=list.find(x=>x.code===code&&x.status==='pending');
       if(!request)throw new Error('Không tìm thấy mã demo còn hiệu lực');
-      request.status='approved';request.role=role;
+      request.status='approved';request.role='Viewer';
       window.auth69SetDemoRequests?.(list);
-      toast('Đã duyệt mã mô phỏng (KHÔNG cấp quyền thật).','success');
+      const email=String(request.email||'').trim().toLowerCase();
+      const exists=state.members.some(u=>String(u.email||'').trim().toLowerCase()===email);
+      if(!exists){
+        state.members.push({id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),name:request.name||request.display_name||email.split('@')[0]||'Tài khoản mới',email:request.email||'',role:'Viewer',permissions:[...BASE_PERMISSIONS.Viewer]});
+        saveTeamMembers();
+      }
+      toast('Đã kích hoạt tài khoản demo và thêm vào Quản lý người dùng & phân quyền.','success');
+      render();
     }
     document.getElementById('activation69Token').value='';
     loadActivationRequests69();
@@ -82,46 +89,48 @@ async function approveAccount69(event){
 window.loadActivationRequests69=loadActivationRequests69;
 window.approveAccount69=approveAccount69;
 
-    function renderTeam(){
-      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return activation69Panel()+`<section class="panel"><h3>Phân quyền hệ thống</h3><p class="mini">Quản trị viên duyệt bằng mã kích hoạt. Vai trò được lưu tại Cloudflare D1, kiểm tra bởi Worker trước mọi lần đọc dữ liệu. Quản lý tài khoản nâng cao sẽ cần endpoint cập nhật riêng.</p></section>`;
-      return activation69Panel()+`<section class="panel">
-        <div class="panel-head team63-head"><div><h3>Quản lý người dùng & phân quyền</h3><div class="mini">Sửa quyền, thêm hoặc xóa tài khoản con trong bản demo.</div></div><button type="button" class="btn primary team63-add" onclick="openTeamEditor()">${icon('plus')} <span>Thêm tài khoản</span></button></div>
-        <div class="user-list">${state.members.map(u=>`<div class="user-item ${u.protected?'user-item-owner':''}">
-          <div class="profile-avatar profile-avatar-sm" aria-hidden="true">${escapeTeam(initials(u.name))}</div>
-          <div class="user-item-info"><h4>${escapeTeam(u.name)} ${u.protected?'<span class="pill purple">Tài khoản chính</span>':''}</h4>
-          <div class="mini">${escapeTeam(u.email)}</div><div class="user-tag-list">${teamRoleBadge(u.role)}${u.permissions.filter(x=>!['manageUsers','manageAPI','manageStorage','editHosts'].includes(x)).slice(0,3).map(p=>`<span class="user-mini-tag">${escapeTeam(TEAM_FEATURES.find(f=>f.id===p)?.title||p)}</span>`).join('')}${u.permissions.length>4?`<span class="user-mini-tag">+ ${u.permissions.length-3} quyền khác</span>`:''}</div>
-          </div><div class="user-item-actions">${u.protected?'<span class="mini">Được bảo vệ</span>':`<button type="button" class="team-action" onclick="openTeamEditor('${escapeTeam(u.id)}')">${icon('settings')} Sửa quyền</button><button type="button" class="team-action delete" onclick="openDeleteTeamModal('${escapeTeam(u.id)}')">${icon('circle-x')} Xóa</button>`}</div>
-        </div>`).join('')}</div>
-        <div class="note" style="margin-top:15px"><b>Lưu ý bảo mật:</b> Dữ liệu tài khoản và quyền ở đây chỉ lưu trên thiết bị để thử giao diện. Khi triển khai thật, phải xác minh quyền trong Firebase Authentication, Firestore Security Rules và Cloudflare backend; ẩn nút trên giao diện không phải là cơ chế bảo vệ tài khoản.</div>
-        <div class="note" style="margin-top:10px"><b>Xem thử giới hạn quyền:</b> ${state.members.filter(u=>!u.protected).slice(0,4).map(u=>`<button type="button" class="team-action" style="margin:5px" onclick="previewMember('${escapeTeam(u.id)}')">${escapeTeam(u.name)}</button>`).join('')} <span class="mini">Chỉ xem thử giao diện, không đăng nhập thay người dùng.</span></div>
-      </section>`;
-    }
-    function escapeTeam(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-    function initials(name){const parts=String(name||'').trim().split(/\s+/).filter(Boolean);return (parts.length>1?parts[0][0]+parts[parts.length-1][0]:(parts[0]||'SK').slice(0,2)).toLocaleUpperCase('vi-VN');}
-    let editingMemberId=null, deletingMemberId=null;
-    function openTeamEditor(id=''){
-      if(!hasPermission('manageUsers'))return toast('Không có quyền quản lý người dùng');
-      const u=id?state.members.find(x=>x.id===id):null;
-      if(id && (!u||u.protected))return toast('Không thể chỉnh sửa tài khoản chủ');
-      editingMemberId=id||null;
-      const role=u?.role||'Ops';
-      document.getElementById('teamDialogTitle').textContent=u?'Sửa quyền tài khoản':'Thêm tài khoản con (Demo)';
-      document.getElementById('teamEditFields').innerHTML=`<div class="team-form-content">
-        <div class="team-form-fields"><label>Họ và tên<input id="teamNameInput" type="text" required maxlength="100" placeholder="Tên nhân sự" value="${escapeTeam(u?.name||'')}"></label><label>Email tài khoản<input id="teamEmailInput" type="email" required maxlength="160" placeholder="example@gmail.com" value="${escapeTeam(u?.email||'')}"></label>
-        <label>Vai trò<select id="teamRoleInput" onchange="presetRolePermissions(this.value)">${Object.entries(ROLE_NAMES).map(([r,label])=>`<option value="${r}" ${role===r?'selected':''}>${label}</option>`).join('')}</select></label></div>
-        <div class="permission-heading"><b>Quyền truy cập chi tiết</b><span>Chọn những mục tài khoản được sử dụng</span></div>
-        <div class="permission-grid">${TEAM_FEATURES.map(p=>`<label class="permission-check"><input type="checkbox" name="permission" value="${p.id}" ${(u?.permissions||BASE_PERMISSIONS[role]).includes(p.id)?'checked':''}><span>${p.title}</span></label>`).join('')}</div>
-        <p class="mini" style="margin-top:14px">Thay vai trò sẽ nạp quyền mặc định; bạn có thể tiếp tục tùy chỉnh từng mục.</p>
-      </div>`;
-      closeSelectPopover();
-      document.getElementById('teamModal').classList.remove('hidden');
-      enhanceAllSelects();
-      // Safari iOS: không tự focus ô nhập khi mở popup. Tránh tự mở bàn phím
-      // và phóng to viewport trước khi người dùng có ý định nhập.
-      if(!window.matchMedia('(pointer:coarse), (max-width:820px)').matches){
-        document.getElementById('teamNameInput').focus({preventScroll:true});
-      }
-    }
+
+
+function renderTeam(){
+  const userListMarkup=`<section class="panel">
+    <div class="panel-head team63-head"><div><h3>Quản lý người dùng & phân quyền</h3><div class="mini">Tài khoản được thêm từ luồng kích hoạt. Tại đây bạn sửa quyền hoặc xóa tài khoản demo.</div></div></div>
+    <div class="user-list">${state.members.map(u=>`<div class="user-item ${u.protected?'user-item-owner':''}">
+      <div class="profile-avatar profile-avatar-sm" aria-hidden="true">${escapeTeam(initials(u.name))}</div>
+      <div class="user-item-info"><h4>${escapeTeam(u.name)} ${u.protected?'<span class="pill purple">Tài khoản chính</span>':''}</h4>
+      <div class="mini">${escapeTeam(u.email)}</div><div class="user-tag-list">${teamRoleBadge(u.role)}${u.permissions.filter(x=>!['manageUsers','manageAPI','manageStorage','editHosts'].includes(x)).slice(0,3).map(p=>`<span class="user-mini-tag">${escapeTeam(TEAM_FEATURES.find(f=>f.id===p)?.title||p)}</span>`).join('')}${u.permissions.length>4?`<span class="user-mini-tag">+ ${u.permissions.length-3} quyền khác</span>`:''}</div>
+      </div><div class="user-item-actions">${u.protected?'<span class="mini">Được bảo vệ</span>':`<button type="button" class="team-action" onclick="openTeamEditor('${escapeTeam(u.id)}')">${icon('settings')} Sửa quyền</button><button type="button" class="team-action delete" onclick="openDeleteTeamModal('${escapeTeam(u.id)}')">${icon('circle-x')} Xóa</button>`}</div>
+    </div>`).join('')}</div>
+    <div class="note" style="margin-top:15px"><b>Lưu ý:</b> Khu vực “Kích hoạt tài khoản mới” chỉ dùng để kích hoạt. Sau khi kích hoạt, tài khoản mặc định mang quyền <b>Chỉ xem</b> và sẽ xuất hiện ở đây để bạn chỉnh lại vai trò.</div>
+    <div class="note" style="margin-top:10px"><b>Xem thử giới hạn quyền:</b> ${state.members.filter(u=>!u.protected).slice(0,4).map(u=>`<button type="button" class="team-action" style="margin:5px" onclick="previewMember('${escapeTeam(u.id)}')">${escapeTeam(u.name)}</button>`).join('')} <span class="mini">Chỉ xem thử giao diện, không đăng nhập thay người dùng.</span></div>
+  </section>`;
+  if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return activation69Panel()+userListMarkup+`<section class="panel"><h3>Phân quyền hệ thống</h3><p class="mini">Trong môi trường thật, dữ liệu quyền phải được xác minh ở backend (Firebase Auth + Cloudflare Worker/D1). Bản demo này chủ yếu minh họa giao diện và luồng sử dụng.</p></section>`;
+  return activation69Panel()+userListMarkup;
+}
+function escapeTeam(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initials(name){const parts=String(name||'').trim().split(/\s+/).filter(Boolean);return (parts.length>1?parts[0][0]+parts[parts.length-1][0]:(parts[0]||'SK').slice(0,2)).toLocaleUpperCase('vi-VN');}
+let editingMemberId=null, deletingMemberId=null;
+function openTeamEditor(id=''){
+  if(!hasPermission('manageUsers'))return toast('Không có quyền quản lý người dùng');
+  if(!id)return toast('Phần thêm tài khoản đã được bỏ. Hãy dùng mục Kích hoạt tài khoản mới.');
+  const u=state.members.find(x=>x.id===id);
+  if(!u||u.protected)return toast('Không thể chỉnh sửa tài khoản chủ');
+  editingMemberId=id||null;
+  const role=u?.role||'Viewer';
+  document.getElementById('teamDialogTitle').textContent='Sửa quyền tài khoản';
+  document.getElementById('teamEditFields').innerHTML=`<div class="team-form-content">
+    <div class="team-form-fields"><label>Họ và tên<input id="teamNameInput" type="text" required maxlength="100" placeholder="Tên nhân sự" value="${escapeTeam(u?.name||'')}"></label><label>Email tài khoản<input id="teamEmailInput" type="email" required maxlength="160" placeholder="example@gmail.com" value="${escapeTeam(u?.email||'')}"></label>
+    <label>Vai trò<select id="teamRoleInput" onchange="presetRolePermissions(this.value)">${Object.entries(ROLE_NAMES).map(([r,label])=>`<option value="${r}" ${role===r?'selected':''}>${label}</option>`).join('')}</select></label></div>
+    <div class="permission-heading"><b>Quyền truy cập chi tiết</b><span>Chọn những mục tài khoản được sử dụng</span></div>
+    <div class="permission-grid">${TEAM_FEATURES.map(p=>`<label class="permission-check"><input type="checkbox" name="permission" value="${p.id}" ${(u?.permissions||BASE_PERMISSIONS[role]).includes(p.id)?'checked':''}><span>${p.title}</span></label>`).join('')}</div>
+    <p class="mini" style="margin-top:14px">Thay vai trò sẽ nạp quyền mặc định; bạn có thể tiếp tục tùy chỉnh từng mục.</p>
+  </div>`;
+  closeSelectPopover();
+  document.getElementById('teamModal').classList.remove('hidden');
+  enhanceAllSelects();
+  if(!window.matchMedia('(pointer:coarse), (max-width:820px)').matches){
+    document.getElementById('teamNameInput').focus({preventScroll:true});
+  }
+}
     function presetRolePermissions(role){
       const set=new Set(BASE_PERMISSIONS[role]||BASE_PERMISSIONS.Viewer);
       document.querySelectorAll('#teamEditForm input[name="permission"]').forEach(el=>el.checked=set.has(el.value));
@@ -137,7 +146,7 @@ window.approveAccount69=approveAccount69;
       if(!permissions.length)return toast('Chọn ít nhất 1 quyền cho tài khoản');
       if(state.members.some(u=>u.email.toLowerCase()===email && u.id!==editingMemberId))return toast('Email này đã có trong danh sách');
       if(editingMemberId){const u=state.members.find(x=>x.id===editingMemberId);if(!u||u.protected)return toast('Không thể chỉnh sửa tài khoản chủ');Object.assign(u,{name,email,role,permissions});}
-      else {state.members.push({id:'demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,5),name,email,role,permissions});}
+      else {return toast('Phần thêm tài khoản đã được bỏ. Hãy dùng mục Kích hoạt tài khoản mới.');}
       saveTeamMembers();closeTeamModal();render();toast('Đã lưu quyền của tài khoản demo');
     }
     function closeTeamModal(){closeSelectPopover();document.getElementById('teamModal').classList.add('hidden');editingMemberId=null;}

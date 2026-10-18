@@ -199,7 +199,7 @@
       }
       const box=trigger.getBoundingClientRect();
       const viewportWidth=window.innerWidth, viewportHeight=window.innerHeight;
-      const desiredWidth=Math.max(box.width,native.classList.contains('host-compact-select')?170:180);
+      const desiredWidth=Math.max(box.width,native.classList.contains('host-compact-select')?148:180);
       const width=Math.min(desiredWidth,viewportWidth-16);
       const left=Math.max(8,Math.min(box.left,viewportWidth-width-8));
       const usableBelow=viewportHeight-box.bottom-10;
@@ -384,7 +384,7 @@
         leaderScope:'all', leaderSort:'net', leaderDetailSortField:'', leaderDetailSortDirection:'',
         orderSortField:'', orderSortDirection:'',
         liveSortField:'', liveSortDirection:'', affiliateSortField:'', affiliateSortDirection:'',
-        livePage:1, affiliatePage:1
+        livePage:1, affiliatePage:1, leaderPage:1
       });
       applyPresetDateRange('30');
       // Chặn form restoration của Safari trước khi React-less UI được render lại.

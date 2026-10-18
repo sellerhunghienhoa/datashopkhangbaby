@@ -1,3 +1,16 @@
+# V76 — Chuẩn hóa chữ trong ô nhập
+
+- Giảm độ đậm và cỡ chữ khi nhập trên trình duyệt thông thường, còn **14px**, chữ gợi ý **12px**.
+- Ô token kích hoạt có placeholder **12px**, cùng nét nhẹ với các ô đăng nhập.
+- Safari iPhone: font **16px khi nhập** để tránh tự phóng to; placeholder vẫn 12px.
+- Không thay đổi dữ liệu, đăng nhập, phân quyền, API hay bố cục.
+
+## V74 — Khôi phục logo nguyên bản
+- Sửa lỗi V72–V73: file `khangbaby-mark.png` từng bị cắt mất chữ KHANGBABY trong chính dữ liệu ảnh.
+- Menu và màn đăng nhập nay dùng ảnh gốc `public/assets/khangbaby-logo.png` đầy đủ.
+- Điều chỉnh CSS logo, giữ đúng tỷ lệ, không cắt, không tạo ảnh mới.
+- Favicon giữ nguyên.
+
 # V69 — Xác thực và kích hoạt tài khoản
 
 - Google Firebase, Email/Password, Đăng ký, Quên mật khẩu.
@@ -282,3 +295,11 @@ Xem `docs/API_CONNECTIONS.md` mục 6 cho các bước triển khai. Bộ mã de
 
 - Đồng bộ tên hiển thị **ShopKhangBaby** (không có khoảng trắng) tại toàn bộ website và nhãn dữ liệu mẫu.
 - Giữ nguyên username/API ID `shopkhangbaby`; không thay đổi định danh dùng để truy xuất hay đồng bộ dữ liệu thật.
+
+
+## V74 — Giao diện đăng nhập/đăng ký responsive
+
+- Thu nhỏ, căn đều logo và DATA SHOPKHANGBABY ở menu và màn hình đăng nhập.
+- Form đăng ký căn giữa khi đủ chiều cao; cuộn được toàn bộ khi màn hình thấp, không cắt nút cuối.
+- Font nhập iPhone giữ 16px để tránh Safari tự zoom; tiêu đề, nhãn và nút cân nhỏ lại.
+- Không thay đổi dữ liệu / xác thực / phân quyền từ V70.

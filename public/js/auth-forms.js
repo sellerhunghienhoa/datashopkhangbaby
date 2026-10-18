@@ -7,7 +7,23 @@ function auth69SetDemoRequests(items){auth69DemoRequests=items;}
 window.auth69GetDemoRequests=auth69GetDemoRequests;
 window.auth69SetDemoRequests=auth69SetDemoRequests;
 function auth69Message(message,error=false){const el=document.getElementById('auth69Message');if(!el)return;el.textContent=message;el.classList.toggle('error',error);}
+let auth69CurrentPanel='login';
+function clearAuthPanelFields(){
+  // No form draft carries across sign-in, registration or password reset.
+  // Reset values explicitly because some mobile browsers restore input state.
+  for(const formId of ['auth69Login','auth69Register','auth69Reset']){
+    const form=document.getElementById(formId);
+    if(!form)continue;
+    form.reset();
+    form.querySelectorAll('input, textarea').forEach(field=>{field.value='';});
+  }
+}
 function setAuthPanel(panel){
+  if(panel!==auth69CurrentPanel){
+    if(document.activeElement?.matches?.('#loginScreen input'))document.activeElement.blur();
+    clearAuthPanelFields();
+    auth69CurrentPanel=panel;
+  }
   const reset=panel==='reset';
   document.getElementById('auth69Login').classList.toggle('hidden',panel!=='login');
   document.getElementById('auth69Register').classList.toggle('hidden',panel!=='register');
