@@ -327,6 +327,26 @@
       if(event.key==='Escape'){closeMobileMenu();closeProfileModal();closeTeamModal();closeDeleteTeamModal();}
     });
 
+    function syncAuthView(){
+      const signedIn=Boolean(state.signedIn);
+      const body=document.body;
+      const login=document.getElementById('loginScreen');
+      const app=document.getElementById('appShell');
+      body.classList.toggle('auth-signed-in',signedIn);
+      body.classList.toggle('auth-signed-out',!signedIn);
+      if(login) login.classList.toggle('hidden',signedIn);
+      if(app) app.classList.toggle('hidden',!signedIn);
+      if(!signedIn){
+        closeSelectPopover();
+        closeMobileMenu();
+        document.getElementById('toolbar').innerHTML='';
+        document.getElementById('content').innerHTML='';
+        window.requestAnimationFrame(()=>window.scrollTo(0,0));
+        setTimeout(()=>window.scrollTo(0,0),0);
+      }
+      syncMobileMenuButton();
+    }
+
     function render(){
       closeSelectPopover();
       if(!canAccessTab(state.currentTab))state.currentTab=canAccessTab('overview')?'overview':(TEAM_FEATURES.find(f=>canAccessTab(f.id))?.id||'overview');
@@ -394,10 +414,8 @@
     function signIn(){
       state.signedIn = true;
       localStorage.setItem('dskh_signed_in', '1');
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appShell').classList.remove('hidden');
+      syncAuthView();
       render();
-      syncMobileMenuButton();
     }
 
     function signOut(){
@@ -405,9 +423,7 @@
       state.previewMemberId=null;
       state.signedIn = false;
       localStorage.setItem('dskh_signed_in', '0');
-      closeMobileMenu();
-      document.getElementById('appShell').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
+      syncAuthView();
       toast('Đã đăng xuất khỏi bản demo');
     }
 
@@ -464,12 +480,7 @@
     loadState();
     installDemoAutoSync();
     installStorageDemoTimer();
-    if(!state.signedIn){
-      document.getElementById('appShell').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
-    } else {
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appShell').classList.remove('hidden');
+    syncAuthView();
+    if(state.signedIn){
       render();
-      syncMobileMenuButton();
     }

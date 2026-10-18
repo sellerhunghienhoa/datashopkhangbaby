@@ -3,6 +3,13 @@
 Dự án đã **tách từ bản demo V40** thành HTML / CSS / nhiều file JavaScript để dễ chỉnh sửa và đưa lên Firebase Hosting. Bản V42 thiết kế lại tab **Top Nhà sáng tạo / Kênh bán chạy** để dễ đọc trên máy tính và điện thoại, giữ nguyên các chức năng khác, bao gồm bộ lọc, LIVE, Affiliate, Ads, KPI, hồ sơ, phân quyền, đồng bộ và dọn bộ nhớ **mô phỏng**.
 
 
+## Cập nhật V48
+
+- Vá lỗi **logout trên điện thoại**: khi đăng xuất chỉ còn màn hình đăng nhập, không còn hiện dashboard phía sau.
+- Chỉnh lại **nhịp dọc và khoảng cách mobile** để các khối đỡ dính nhau, đều nhau hơn khi xem trên iPhone/Android.
+- Dời **toast/thông báo** trên điện thoại lên phía trên để không che bộ lọc và nội dung ở cuối màn hình.
+- Giữ nguyên logic dữ liệu demo và phần tính/đối soát hoa hồng Affiliate theo SKU từ V47.
+
 ## Thay đổi giao diện V42
 
 - Sắp lại tab **Top Nhà sáng tạo / Kênh bán chạy** thành: giới thiệu ngắn, ba số liệu tổng quan, biểu đồ thanh xếp hạng, hai khu vực nổi bật và bảng chi tiết.
@@ -95,3 +102,19 @@ Xem `docs/API_CONNECTIONS.md` mục 6 cho các bước triển khai. Bộ mã de
 - Khi bấm **Áp dụng** cho Chọn ngày, nút lọc hiện khoảng ngày đã xác nhận (đầy đủ trong tooltip).
 - Menu ngày bỏ cuộn dọc; khi mở lịch, danh sách mốc thời gian thu gọn và có nút quay lại.
 - Vẫn giới hạn 3 tháng, áp dụng riêng cho báo cáo chính và LIVE Affiliate.
+
+
+## V46 — ĐỒNG BỘ NÚT SẮP XẾP GMV
+
+- Tiêu đề doanh thu trong bảng LIVE, LIVE Affiliate, Top Nhà sáng tạo / Kênh và Đối soát sử dụng chung cặp chevron mảnh màu tím; không còn nút đen hình vuông mặc định ở Affiliate.
+- Mỗi nút luân phiên giảm dần → tăng dần → bỏ sắp xếp. Việc sắp xếp trong bảng chi tiết Top tách biệt biểu đồ xếp hạng tổng thể.
+- CSS nằm trong `public/css/styles.css`, thao tác sắp xếp ở `public/js/dashboard.js`.
+
+
+## V47 — HOA HỒNG AFFILIATE THEO SKU
+- Tab LIVE Affiliate có tỷ lệ riêng cho 5 SKU mẫu, lịch sử phiên bản tỷ lệ, và sổ đối soát dòng đơn: Order ID, SKU, thực trả, hoàn tiền, tỷ lệ lúc bán, hoa hồng dự báo, hoa hồng sau hoàn, hoa hồng do TikTok xác nhận (mô phỏng) và cảnh báo chênh lệch.
+- Chỉ Admin / tài khoản được cấp quyền quản lý API mới thay tỷ lệ hoặc điều chỉnh dòng đối soát demo. Thao tác demo được lưu localStorage trên trình duyệt, không sửa dữ liệu nền tảng.
+- Khi thay tỷ lệ SKU, các đơn hàng cũ không đổi. Số đã quyết toán chính thức (khi có nguồn TikTok) là giá trị đối chiếu ưu tiên.
+- `public/js/affiliate-commission.js` là engine mô phỏng thuần JS; `cloudflare/migrations/0003_affiliate_sku_commissions.sql` là mẫu schema cho backend; `docs/AFFILIATE_SKU_RECONCILIATION.md` mô tả luồng production.
+- `node tests/affiliate-commission.test.cjs` để kiểm thử logic.
+**Chưa có kết nối TikTok Affiliate Orders/Settlement API thực tế trong V47.** Không dùng số liệu giả lập để quyết toán cho đối tác.
