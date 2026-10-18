@@ -105,16 +105,18 @@
     }
 
     function loadState(){
+      const liveMode=window.SHOPKHANGBABY_CONFIG?.mode==='live';
       const hostSaved = localStorage.getItem('dskh_live_host_map');
       let mapped = {};
       if(hostSaved){ try{ mapped = JSON.parse(hostSaved); }catch(e){} }
-      state.liveData = baseLives.map(x=>({...x, host:mapped[x.id] || x.host}));
+      state.liveData = liveMode ? [] : baseLives.map(x=>({...x, host:mapped[x.id] || x.host}));
       state.autoEnabled = localStorage.getItem('dskh_auto_enabled') !== 'false';
       state.autoMinutes = Number(localStorage.getItem('dskh_auto_minutes') || 15);
       const role = localStorage.getItem('dskh_role');
       const signed = localStorage.getItem('dskh_signed_in');
       if(role) state.role = role;
-      if(signed!==null) state.signedIn = signed === '1';
+      if(signed!==null && !liveMode) state.signedIn = signed === '1';
+      if(liveMode)state.signedIn=false;
       const storedMembers=localStorage.getItem('dskh_demo_users_v17');
       let members=defaultTeamMembers();
       if(storedMembers){try{
@@ -130,6 +132,7 @@
     }
 
     function saveHosts(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return;
       const map = {};
       state.liveData.forEach(x=> map[x.id] = x.host);
       localStorage.setItem('dskh_live_host_map', JSON.stringify(map));
@@ -244,7 +247,7 @@
           </div>
           <div class="toolbar-group page-actions">
             <button class="btn ghost" onclick="exportCSV()">${icon('download')} Xuất CSV</button>
-            ${hasPermission('editHosts') ? `<button class="btn primary" onclick="addDemoLive()">${icon('plus')} Thêm phiên demo</button>` : ''}
+            ${hasPermission('editHosts') && window.SHOPKHANGBABY_CONFIG?.mode!=='live' ? `<button class="btn primary" onclick="addDemoLive()">${icon('plus')} Thêm phiên demo</button>` : ''}
           </div>`;
       } else if(state.currentTab==='leaders'){
         toolbar.innerHTML = `
@@ -281,7 +284,7 @@
           <div class="filter-grid is-three">
             <select class="select" onchange="state.channelFilter=this.value;render()">
               <option value="all" ${state.channelFilter==='all'?'selected':''}>Tất cả shop / nguồn quảng cáo</option>
-              <option value="shop-001" ${state.channelFilter==='shop-001'?'selected':''}>Shop KhangBaby</option>
+              <option value="shop-001" ${state.channelFilter==='shop-001'?'selected':''}>ShopKhangBaby</option>
               <option value="shop-002" ${state.channelFilter==='shop-002'?'selected':''}>Mẹ Khang Sữa</option>
             </select>
             ${buildQuickRangeFilter()}
@@ -370,7 +373,7 @@
             </div>
           </div>
           <div class="note">
-            • Chỉ tính LIVE của <b>Mẹ Khang Sữa</b> và <b>Shop KhangBaby</b> trong Tổng quan và KPI Host. LIVE của đối tác Affiliate hiển thị ở tab riêng.<br>
+            • Chỉ tính LIVE của <b>Mẹ Khang Sữa</b> và <b>ShopKhangBaby</b> trong Tổng quan và KPI Host. LIVE của đối tác Affiliate hiển thị ở tab riêng.<br>
             • GMV sau hoàn/hủy phải tách riêng với GMV đã ghi nhận để tránh nhầm khi tính KPI.<br>
             • Cần theo dõi đối soát sau LIVE vì khách có thể hủy đơn hoặc hoàn đơn trong thời gian chính sách.<br>
             • Host đã được gắn tag trực tiếp ở từng phiên LIVE: <b>Thảo My</b>, <b>Dung</b>, <b>Tâm</b>.<br>
@@ -501,7 +504,7 @@
             <div class="panel-head" style="margin-bottom:8px">
               <div>
                 <h3>Danh sách phiên LIVE đã kết thúc</h3>
-                <div class="mini live-table-caption">Chỉ hai kênh Mẹ Khang Sữa và Shop KhangBaby • Gắn Host cho từng phiên • Không gồm Affiliate</div>
+                <div class="mini live-table-caption">Chỉ hai kênh Mẹ Khang Sữa và ShopKhangBaby • Gắn Host cho từng phiên • Không gồm Affiliate</div>
               </div>
               <span class="pill purple">${rows.length} phiên</span>
             </div>
@@ -575,79 +578,6 @@
       </div>`;
     }
 
-    // V47: dòng đơn/SKU mẫu, lưu snapshot tỷ lệ tại thời điểm phát sinh.
-    const affiliateLedger=AffiliateCommission.create(demoAffiliateLives,window.localStorage);
-    state.affShowAllItems=false;
-    function affiliateSessionCommission(id){return affiliateLedger.stats(id);}
-    function persistAffiliateItem(itemId){
-      if(!hasPermission('manageAPI')){toast('Cần quyền quản trị nguồn dữ liệu để sửa bản đối soát.', 'error');return;}
-      const line=document.querySelector('[data-aff-item="'+itemId+'"]');
-      if(!line)return;
-      const rawRefund=line.querySelector('[data-field="refund"]').value;
-      const rawConfirmed=line.querySelector('[data-field="confirmed"]').value;
-      const status=line.querySelector('[data-field="status"]').value;
-      if(rawRefund.trim()===''||!/^\d+$/.test(rawRefund.trim())||rawConfirmed.trim()!==''&&!/^\d+$/.test(rawConfirmed.trim())){
-        toast('Nhập số tiền nguyên không âm, không có dấu phân tách.', 'error', 'Giá trị không hợp lệ');return;
-      }
-      try {
-        affiliateLedger.updateItem(itemId,{refundVnd:Number(rawRefund),status,tiktokConfirmedVnd:rawConfirmed.trim()===''?null:Number(rawConfirmed)});
-        toast('Đã lưu điều chỉnh dòng đơn vào dữ liệu demo. Dòng tiền thật cần đối soát API TikTok.','success','Đã cập nhật mô phỏng');
-        render();
-      }catch(e){toast(configSafe(e.message),'error','Không thể lưu');}
-    }
-    function persistAffiliateSku(skuId){
-      if(!hasPermission('manageAPI')){toast('Chỉ người quản lý nguồn dữ liệu được sửa tỷ lệ.','error');return;}
-      const field=document.querySelector('[data-aff-rate="'+skuId+'"]');if(!field)return;
-      try {
-        const dt=toInputDate(new Date());
-        affiliateLedger.saveRate(skuId,field.value,dt);
-        toast('Lưu mức hoa hồng mới từ hôm nay. Đơn hàng cũ giữ nguyên mức tại lúc bán.','success','Đã lưu tỷ lệ SKU');
-        render();
-      }catch(e){toast(configSafe(e.message),'error','Không thể lưu');}
-    }
-    function resetAffiliateLedgerDemo(){
-      if(!hasPermission('manageAPI'))return;
-      if(!window.confirm('Khôi phục tỷ lệ SKU và đối soát dữ liệu MẪU ban đầu?'))return;
-      affiliateLedger.reset();state.affShowAllItems=false;render();
-      toast('Đã khôi phục dữ liệu hoa hồng minh họa.','success');
-    }
-    function exportAffiliateItemCSV(){
-      const ids=new Set(affiliateRows().map(x=>x.id));
-      const rows=affiliateLedger.allItems().filter(x=>ids.has(x.sessionId));
-      const records=[['Mã đơn mẫu','Mã dòng','Phiên','SKU','Ngày bán','Giá trị thực trả','Hoàn tiền','Tỷ lệ tại lúc bán (%)','Phiên bản tỷ lệ','Hoa hồng ước tính','Hoa hồng sau hoàn/hủy','Hoa hồng TikTok (nếu có)','Chênh lệch','Trạng thái đối soát'],...rows.map(x=>[x.orderId,x.id,x.sessionId,x.skuId,x.placedAt,x.paidVnd,x.refundVnd,x.rateBps/100,x.rateVersionId,x.estimated,x.adjusted,x.tiktokConfirmedVnd??'',x.difference??'',x.check])];
-      const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-      const blob=new Blob(['\ufeff'+records.map(r=>r.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-      const anchor=document.createElement('a');anchor.href=URL.createObjectURL(blob);anchor.download='DATA_SHOPKHANGBABY_AFFILIATE_SKU_DEMO.csv';anchor.click();setTimeout(()=>URL.revokeObjectURL(anchor.href),1000);
-    }
-    function renderAffiliateSkuControls(){
-      const canEdit=hasPermission('manageAPI');
-      const list=affiliateLedger.latestRates();
-      return `<section class="panel aff-sku-panel">
-        <div class="panel-head"><div><h3>${icon('percent','heading-icon')} Tỷ lệ hoa hồng theo từng SKU</h3><div class="mini">Có lịch sử phiên bản • tỷ lệ đã áp dụng cho đơn cũ không thay đổi. Tất cả đều là dữ liệu mẫu.</div></div><span class="pill purple">${list.length} SKU mẫu</span></div>
-        <div class="aff-sku-grid">${list.map(x=>`<div class="aff-sku-card"><div class="aff-sku-name"><strong>${configSafe(x.name)}</strong><span>${configSafe(x.id)}</span></div><div class="aff-sku-bottom"><label class="aff-rate-edit"><span>Tỷ lệ hiện hành</span><input data-aff-rate="${x.id}" aria-label="Tỷ lệ ${configSafe(x.name)}" type="number" step="0.01" min="0" max="100" value="${x.rate.bps/100}" ${canEdit?'':'disabled'}></label><button type="button" class="btn ghost aff-save-rate" onclick="persistAffiliateSku('${x.id}')" ${canEdit?'':'disabled'}>${icon('save')} Lưu</button></div><small>Hiệu lực: ${configSafe(x.rate.effectiveFrom)} • ${x.rate.bps/100}%</small></div>`).join('')}</div>
-        <details class="aff-rate-history"><summary>Lịch sử thay đổi tỷ lệ SKU (${affiliateLedger.getRateHistory().length} phiên bản)</summary><div class="aff-history-list">${affiliateLedger.getRateHistory().map(x=>`<div><span><b>${configSafe(x.skuId)}</b> • từ ${x.effectiveFrom}</span><strong>${x.bps/100}%</strong><span class="mini">${configSafe(x.source)}</span></div>`).join('')}</div></details>
-        <div class="aff-helper"><span>Ví dụ: sản phẩm A 11% và B 15% được tính riêng theo từng dòng đơn. Khi chỉnh tỷ lệ, hệ thống chỉ áp dụng cho đơn mới từ ngày hiệu lực; không tính lại lịch sử.</span>${canEdit?`<button type="button" class="btn ghost" onclick="resetAffiliateLedgerDemo()">Khôi phục dữ liệu mẫu</button>`:''}</div>
-      </section>`;
-    }
-    function renderAffiliateReconciliation(rows){
-      const authorized=hasPermission('manageAPI');
-      const keys=new Set(rows.map(x=>x.id));
-      const records=affiliateLedger.allItems().filter(x=>keys.has(x.sessionId));
-      const seen=state.affShowAllItems?records:records.slice(0,10);
-      const total=records.reduce((acc,x)=>{acc.estimated+=x.estimated;acc.adjusted+=x.adjusted;if(x.check==='matched')acc.matched++;if(x.check==='mismatch')acc.mismatch++;if(x.check==='awaiting')acc.pending++;return acc;},{estimated:0,adjusted:0,matched:0,mismatch:0,pending:0});
-      const pill=x=>x.check==='mismatch'?'<span class="pill warn">Chênh lệch</span>':x.check==='matched'?'<span class="pill ok">Đã khớp</span>':'<span class="pill purple">Chờ dữ liệu</span>';
-      return `<section class="panel aff-ledger-panel">
-        <div class="panel-head"><div><h3>${icon('receipt','heading-icon')} Đối soát hoa hồng theo đơn hàng / SKU</h3><div class="mini">Mỗi dòng có Order ID, SKU, tỷ lệ chốt khi bán, hoàn tiền và số TikTok xác nhận nếu có.</div></div><button class="btn ghost" onclick="exportAffiliateItemCSV()">${icon('download')} Xuất chi tiết CSV</button></div>
-        <div class="aff-reconcile-strip"><span><strong>${money(total.estimated)}</strong><small>Hoa hồng trước hoàn</small></span><span><strong>${money(total.adjusted)}</strong><small>Hoa hồng sau hoàn</small></span><span><strong>${total.matched}</strong><small>Đã khớp</small></span><span><strong>${total.mismatch}</strong><small>Chênh lệch</small></span><span><strong>${total.pending}</strong><small>Chờ TikTok</small></span></div>
-        <div class="note" style="margin-top:12px">Số xác nhận TikTok trong bản demo chỉ để thử chức năng đối soát. Trong hệ thống thật, kết quả API/đối soát là nguồn xác nhận; các thay đổi thủ công phải đi kèm quyền, lịch sử và chứng từ.</div>
-        <div class="table-wrap"><table class="affiliate-table aff-ledger-table"><thead><tr><th>Đơn / Phiên</th><th>SKU / sản phẩm</th><th>Tiền thực trả</th><th>Tỷ lệ chốt</th><th>Hoàn tiền</th><th>Trạng thái</th><th>Hoa hồng sau hoàn</th><th>TikTok xác nhận</th><th>Đối soát</th>${authorized?'<th>Thao tác</th>':''}</tr></thead><tbody>
-        ${seen.map(x=>`<tr data-aff-item="${x.id}"><td><b>${configSafe(x.orderId)}</b><div class="mini">${configSafe(x.sessionId)}</div></td><td><b>${configSafe(x.skuName)}</b><div class="mini">${configSafe(x.skuId)}</div></td><td>${money(x.paidVnd)}</td><td><b>${x.rateBps/100}%</b><div class="mini">${configSafe(x.rateVersionId)}</div></td><td>${authorized?`<input class="aff-money-input" aria-label="Hoàn tiền ${x.orderId}" data-field="refund" inputmode="numeric" value="${x.refundVnd}">`:money(x.refundVnd)}</td><td>${authorized?`<select class="aff-status-select" aria-label="Trạng thái ${x.orderId}" data-field="status">${[['pending','Chờ hoàn tất'],['partial_refund','Hoàn một phần'],['cancelled','Hủy / hoàn toàn bộ'],['delivered','Đã giao'],['settled','Đã quyết toán']].map(p=>`<option value="${p[0]}" ${x.status===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>`:configSafe(x.status)}</td><td><b>${money(x.adjusted)}</b></td><td>${authorized?`<input class="aff-money-input" aria-label="Hoa hồng TikTok ${x.orderId}" data-field="confirmed" inputmode="numeric" placeholder="Chưa có" value="${x.tiktokConfirmedVnd??''}">`:x.tiktokConfirmedVnd===null?'Chờ dữ liệu':money(x.tiktokConfirmedVnd)}</td><td>${pill(x)}${x.check==='mismatch'?`<div class="mini">Chênh ${money(x.difference)}</div>`:''}</td>${authorized?`<td><button class="btn ghost" type="button" onclick="persistAffiliateItem('${x.id}')">Lưu</button></td>`:''}</tr>`).join('')||'<tr><td colspan="10">Không có dữ liệu SKU trong bộ lọc hiện tại.</td></tr>'}
-        </tbody></table></div>
-        <div class="aff-table-foot"><span>Hiển thị ${seen.length}/${records.length} dòng đơn minh họa</span>${records.length>10?`<button class="btn ghost" type="button" onclick="state.affShowAllItems=!state.affShowAllItems;render()">${state.affShowAllItems?'Thu gọn 10 dòng':'Xem tất cả '+records.length+' dòng'}</button>`:''}</div>
-        <details class="aff-rate-history aff-audit-panel"><summary>Nhật ký điều chỉnh trong bản demo (${affiliateLedger.getAudit().length})</summary><div class="aff-history-list">${affiliateLedger.getAudit().slice(0,20).map(x=>`<div><b>${configSafe(x.action)}</b><span>${configSafe(x.reference)}</span><span class="mini">${configSafe(x.at)}</span></div>`).join('')||'<div class="mini">Chưa có thay đổi.</div>'}</div></details>
-      </section>`;
-    }
-
     function affiliateRows(){
       const q=state.affiliateSearch.toLowerCase().trim();
       const today=new Date();today.setHours(0,0,0,0);
@@ -665,12 +595,6 @@
         const days=Number(state.affiliateDate);
         return day>=new Date(today.getFullYear(),today.getMonth(),today.getDate()-(days-1)) && day<=today;
       });
-      const enriched=list.map(a=>{
-        const st=affiliateSessionCommission(a.id);
-        const items=affiliateLedger.forSession(a.id);
-        return {...a, gross:items.reduce((v,x)=>v+x.paidVnd,0), refund:items.reduce((v,x)=>v+x.refundVnd,0), returned:items.filter(x=>x.refundVnd>0).length, commission:st.adjusted, estimatedCommission:st.estimated, confirmedCommission:st.confirmed};
-      });
-      list.length=0;list.push(...enriched);
       if(state.affiliateSortField){
         const field = state.affiliateSortField;
         const mult = state.affiliateSortDirection === 'asc' ? 1 : -1;
@@ -684,7 +608,7 @@
 
     function renderAffiliate(){
       const all=affiliateRows();
-      const t=all.reduce((r,x)=>({gross:r.gross+x.gross,refund:r.refund+x.refund,orders:r.orders+x.orders,returned:r.returned+x.returned,commission:r.commission+x.commission}),{gross:0,refund:0,orders:0,returned:0,commission:0});
+      const t=all.reduce((r,x)=>({gross:r.gross+x.gross,refund:r.refund+x.refund,orders:r.orders+x.orders,returned:r.returned+x.returned}),{gross:0,refund:0,orders:0,returned:0});
       const net=t.gross-t.refund;
       const creatorCount=new Set(all.map(x=>x.handle)).size;
       const totalPages=Math.max(1,Math.ceil(all.length/20));
@@ -692,32 +616,30 @@
       const from=(state.affiliatePage-1)*20;
       const current=all.slice(from,from+20);
       return `
-        <section class="note" style="margin-bottom:16px"><b>Tab LIVE Affiliate — riêng biệt với LIVE chính thức</b><div>Chỉ dữ liệu mẫu để duyệt giao diện. Các đối tác, tài khoản, đơn hàng và doanh thu dưới đây đều giả lập. Khi nối TikTok API cần xác minh quyền dữ liệu từng nhà sáng tạo, đơn hàng quy gán và báo cáo phiên LIVE được phép truy xuất. Không cộng các số này vào Tổng quan hoặc KPI Host chính thức.</div></section>
+        <section class="note" style="margin-bottom:16px"><b>LIVE Affiliate — chỉ theo dõi GMV và đơn hàng</b><div>Đã bỏ toàn bộ tỷ lệ và hoa hồng nhập tay. Khi được TikTok cấp quyền, hệ thống sẽ đọc mức Cộng tác mở qua API Seller. Bản demo chưa có dữ liệu hoa hồng thật nên không hiển thị số tiền hoa hồng.</div></section>
         <div class="metrics affiliate-metrics">
           <div class="metric"><div class="metric-top"><span>GMV Affiliate ghi nhận</span><span class="metric-icon tone-violet">${icon('banknote')}</span></div><div class="metric-value">${money(t.gross)}</div><div class="metric-note">Doanh thu quy gán Affiliate (mẫu)</div></div>
           <div class="metric"><div class="metric-top"><span>GMV sau hoàn / hủy</span><span class="metric-icon tone-emerald">${icon('wallet')}</span></div><div class="metric-value">${money(net)}</div><div class="metric-note">Tạm tính, chưa chốt với TikTok</div></div>
           <div class="metric"><div class="metric-top"><span>Đơn Affiliate</span><span class="metric-icon tone-blue">${icon('shopping-bag')}</span></div><div class="metric-value">${t.orders.toLocaleString('vi-VN')}</div><div class="metric-note">${creatorCount} đối tác • ${all.length} phiên minh họa</div></div>
-          <div class="metric"><div class="metric-top"><span>Hoa hồng sau hoàn/hủy (SKU)</span><span class="metric-icon tone-amber">${icon('percent')}</span></div><div class="metric-value">${money(t.commission)}</div><div class="metric-note">Tạm tính theo tỷ lệ mỗi SKU lúc bán • chưa phải quyết toán</div></div>
+          <div class="metric"><div class="metric-top"><span>Đơn hoàn / hủy</span><span class="metric-icon tone-amber">${icon('rotate')}</span></div><div class="metric-value">${t.returned.toLocaleString('vi-VN')}</div><div class="metric-note">Đơn Affiliate có hoàn / hủy (dữ liệu mẫu)</div></div>
         </div>
         <section class="panel affiliate-panel">
           <div class="panel-head"><div><h3>${icon('users','heading-icon')} Danh sách đối tác và phiên LIVE Affiliate</h3><div class="mini">Xem đối tác nào đang đóng góp doanh thu từ sản phẩm của shop</div></div><span class="pill purple">${all.length} phiên minh họa</span></div>
-          <div class="mini affiliate-scroll-hint">Vuốt ngang bảng để xem đầy đủ doanh số, đơn hàng, hoa hồng và trạng thái.</div>
+          <div class="mini affiliate-scroll-hint">Vuốt ngang bảng để xem đầy đủ doanh số, đơn hàng và trạng thái.</div>
           <div class="table-wrap"><table class="affiliate-table">
-            <thead><tr><th>Nhà sáng tạo / Kênh</th><th>Phiên LIVE</th><th>Thời gian</th><th>Thời lượng</th><th>${affiliateSortHeader('gross','GMV đã ghi nhận')}</th><th>${affiliateSortHeader('net','GMV sau hoàn hủy')}</th><th>Số đơn</th><th>Hoa hồng sau hoàn/hủy</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>Nhà sáng tạo / Kênh</th><th>Phiên LIVE</th><th>Thời gian</th><th>Thời lượng</th><th>${affiliateSortHeader('gross','GMV đã ghi nhận')}</th><th>${affiliateSortHeader('net','GMV sau hoàn hủy')}</th><th>Số đơn</th><th>Đơn hoàn / hủy</th><th>Trạng thái</th></tr></thead>
             <tbody>${current.length?current.map(a=>`<tr>
               <td><b>${configSafe(a.creator)}</b><div class="mini">${configSafe(a.handle)}</div></td>
               <td><b>${configSafe(a.title)}</b><div class="mini">${configSafe(a.id)}</div></td>
               <td>${configSafe(a.start)}</td><td>${configSafe(a.duration)}</td>
               <td><b>${money(a.gross)}</b></td><td><b>${money(a.gross-a.refund)}</b></td>
-              <td>${a.orders}</td><td>${money(a.commission)}</td><td><span class="pill warn">${configSafe(a.status)}</span></td>
+              <td>${a.orders}</td><td>${a.returned}</td><td><span class="pill warn">${configSafe(a.status)}</span></td>
             </tr>`).join(''):'<tr><td colspan="9" class="affiliate-empty">Không có phiên Affiliate trong bộ lọc đang chọn.</td></tr>'}</tbody>
           </table></div>
           <div class="live-pager"><span>Hiển thị ${all.length?from+1:0}–${Math.min(from+20,all.length)} / ${all.length} phiên</span>
             <div class="page-actions"><button class="btn ghost" onclick="changeAffiliatePage(-1)" ${state.affiliatePage<=1?'disabled':''}>${icon('chevron-left')} Trước</button><span>Trang ${state.affiliatePage}/${totalPages}</span><button class="btn ghost" onclick="changeAffiliatePage(1)" ${state.affiliatePage>=totalPages?'disabled':''}>Sau ${icon('chevron-right')}</button></div>
           </div>
         </section>
-        ${renderAffiliateSkuControls()}
-        ${renderAffiliateReconciliation(all)}
         <section class="panel" style="margin-top:16px"><div class="panel-head"><div><h3>Phân tích đối tác Affiliate</h3><div class="mini">Xếp hạng theo GMV Affiliate sau hoàn hủy của các phiên minh họa</div></div></div>
         <div class="affiliate-rank">${Array.from(new Set(all.map(x=>x.handle))).map(handle=>{
           const partner=all.filter(x=>x.handle===handle);
@@ -850,7 +772,7 @@
     }
     function exportAffiliateCSV(){
       const rows=affiliateRows();
-      const lines=[['Nhà sáng tạo','Kênh Affiliate','Tên phiên','Thời gian','Thời lượng','GMV ghi nhận','GMV sau hoàn hủy','Số đơn','Số đơn hoàn hủy','Hoa hồng sau hoàn hủy tạm tính theo SKU','Trạng thái'],...rows.map(x=>[x.creator,x.handle,x.title,x.start,x.duration,x.gross,x.gross-x.refund,x.orders,x.returned,x.commission,x.status])];
+      const lines=[['Nhà sáng tạo','Kênh Affiliate','Tên phiên','Thời gian','Thời lượng','GMV ghi nhận','GMV sau hoàn hủy','Số đơn','Số đơn hoàn hủy','Trạng thái'],...rows.map(x=>[x.creator,x.handle,x.title,x.start,x.duration,x.gross,x.gross-x.refund,x.orders,x.returned,x.status])];
       const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
       const blob=new Blob(['\ufeff'+lines.map(line=>line.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'});
       const anchor=document.createElement('a');anchor.href=URL.createObjectURL(blob);anchor.download='DATA_SHOPKHANGBABY_AFFILIATE_DEMO.csv';anchor.click();URL.revokeObjectURL(anchor.href);
@@ -940,6 +862,7 @@
     }
 
     function renderAds(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return v50RealAdsHtml();
       const campaigns=[
         {name:'GMV Max • Livestream', objective:'Doanh số tối đa', source:'shopkhangbaby', status:'Đang chạy', spend:8400000, revenue:57120000, impressions:486000, clicks:14600, ctr:3.00, cpc:575, cpm:17284, orders:168, conversions:185, cvr:1.27, cpa:50000, atc:532, checkout:251, roas:6.8},
         {name:'Video Shopping • A', objective:'Chuyển đổi', source:'mekhangsua', status:'Cần tối ưu', spend:6200000, revenue:19220000, impressions:352000, clicks:7040, ctr:2.00, cpc:881, cpm:17614, orders:76, conversions:80, cvr:1.14, cpa:81579, atc:260, checkout:111, roas:3.1},
@@ -1005,6 +928,16 @@
     }
 
     function exportAdsCSV(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live'){
+        const rows=window.V50_REAL_ADS||[];
+        const clean=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+        const headers=['Ngày','Advertiser ID','Campaign ID','Tên chiến dịch','Chi tiêu VND','Doanh thu quy gán VND','Hiển thị','Nhấp','Đơn'];
+        const body=rows.map(r=>[r.report_date,r.advertiser_id,r.campaign_id,r.campaign_name,r.spend_vnd,r.attributed_revenue_vnd,r.impressions,r.clicks,r.orders]);
+        const csv='\ufeff'+[headers,...body].map(row=>row.map(clean).join(',')).join('\r\n');
+        const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DATA_SHOPKHANGBABY_ADS_REAL.csv';a.click();URL.revokeObjectURL(a.href);
+        return;
+      }
       const lines=['Chien dich,Muc tieu,Trang thai,Chi tieu,Doanh thu,ROAS,Hien thi,Nhấp,CTR,CPC,CVR,Don'];
       [
         ['GMV Max • Livestream','Doanh số tối đa','Đang chạy',8400000,57120000,6.8,486000,14600,'3.00%','575đ','1.27%',168],

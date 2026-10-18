@@ -21,7 +21,7 @@
       Viewer:['overview','leaders']
     };
     function defaultTeamMembers(){return [
-      {id:'owner',name:'Shop Khangbaby',email:'shopkhangbaby@gmail.com',role:'Admin',permissions:[...BASE_PERMISSIONS.Admin],protected:true},
+      {id:'owner',name:'ShopKhangBaby',email:'shopkhangbaby@gmail.com',role:'Admin',permissions:[...BASE_PERMISSIONS.Admin],protected:true},
       {id:'ops-demo',name:'Nhân sự vận hành (Demo)',email:'ops@example.com',role:'Ops',permissions:[...BASE_PERMISSIONS.Ops]},
       {id:'host-demo',name:'Nhân sự Host (Demo)',email:'host@example.com',role:'Host',permissions:[...BASE_PERMISSIONS.Host]}
     ];}
@@ -195,7 +195,7 @@
     }
     function integrationFields(){
       if(state.integrationTab==='shop') return `
-        <div class="field full api-service-note"><b>TikTok Shop Seller — dữ liệu thuộc shop</b><span>Ủy quyền shop để lấy LIVE, đơn hàng, hoàn/hủy, quyết toán. LIVE chính thức vẫn giới hạn 2 kênh <b>Shop KhangBaby</b> và <b>Mẹ Khang Sữa</b>. Username chỉ là tên hiển thị; phải ánh xạ Creator ID phía máy chủ.</span></div>
+        <div class="field full api-service-note"><b>TikTok Shop Seller — dữ liệu thuộc shop</b><span>Ủy quyền shop để lấy LIVE, đơn hàng, hoàn/hủy, quyết toán. LIVE chính thức vẫn giới hạn 2 kênh <b>ShopKhangBaby</b> và <b>Mẹ Khang Sữa</b>. Username chỉ là tên hiển thị; phải ánh xạ Creator ID phía máy chủ.</span></div>
         ${connectionGroup('01 · Ứng dụng & định danh', 'Tạo ứng dụng TikTok Shop trong Partner Center; chọn quyền Seller phù hợp.')}
         ${configInput('App Key — TikTok Shop','shop_app_key','App Key lấy trong Partner Center',true)}
         ${configInput('Shop Cipher','shop_cipher','Lấy bằng Get Authorized Shops sau khi seller cấp quyền',true)}
@@ -220,7 +220,7 @@
         ${configInput('Ads App ID','ads_app_id','App ID / Client ID ứng dụng TikTok API for Business',true)}
         ${configInput('Advertiser ID','ads_advertiser','ID tài khoản quảng cáo mà token được ủy quyền',true)}
         ${configInput('Business Center ID','ads_business','Không bắt buộc nếu không sử dụng Business Center')}
-        ${configInput('Shop / kênh liên kết','ads_shop_map','Gợi ý: Shop KhangBaby hoặc Mẹ Khang Sữa')}
+        ${configInput('Shop / kênh liên kết','ads_shop_map','Gợi ý: ShopKhangBaby hoặc Mẹ Khang Sữa')}
         ${connectionGroup('02 · OAuth & báo cáo', 'Quyền truy cập báo cáo phụ thuộc vào app, advertiser và phạm vi được phê duyệt.')}
         ${configInput('OAuth Redirect URI','ads_redirect','Callback HTTPS đăng ký trong TikTok Business Developers')}
         ${configInput('Quyền Ads đã được cấp','ads_scopes','Danh mục quyền Authentication / Reporting / Advertiser phù hợp; tùy trạng thái app')}
@@ -254,14 +254,14 @@
         <div class="field full api-service-note"><b>Affiliate — tách Seller, Creator và Partner</b><span>Dữ liệu cộng tác bán hàng có thể lấy từ Affiliate Seller, còn số liệu từng phiên LIVE của Creator bên thứ ba có thể bị giới hạn hoặc cần ủy quyền Creator/Partner riêng. Không cộng Affiliate vào KPI Host chính thức.</span></div>
         ${connectionGroup('01 · Nguồn Affiliate Seller', 'Dùng shop đã ủy quyền và các quyền Affiliate Seller đúng phạm vi.')}
         ${configInput('Shop Cipher cho Affiliate Seller','affiliate_shop_cipher','Shop cipher Seller đã được ủy quyền')}
-        ${configInput('Affiliate Seller scopes','affiliate_scope','Ví dụ quyền đọc cộng tác và đơn hàng Affiliate được TikTok cấp')}
+        ${configInput('Affiliate Seller scopes','affiliate_scope','Để tự đọc Cộng tác mở: seller.affiliate_collaboration.read; đơn/settlement cần quyền được cấp riêng')}
         ${configInput('Seller Affiliate API version','affiliate_version','Tùy phiên bản endpoint được bật')}
         ${connectionGroup('02 · Affiliate Partner / Creator', 'Chỉ cần nếu muốn dữ liệu chi tiết của đối tác ngoài phạm vi Seller.')}
         ${configInput('Creator Open ID / Creator ID','affiliate_creator_id','Dùng định danh từ API được ủy quyền, không suy luận từ @username')}
         ${configInput('Category Asset Cipher (Partner)','affiliate_category_cipher','Lấy từ Partner Center nếu Affiliate Partner API yêu cầu')}
         ${configInput('Nguồn dữ liệu Affiliate','affiliate_source','Seller Affiliate / Partner Affiliate / Creator Analytics')}
         ${secretField('Creator Token (nếu được ủy quyền)','affiliate_creator_token','Không dùng Seller token thay cho token Creator')}
-        <div class="field full api-permission-card"><b>Quy tắc đối soát</b><span>Tách GMV Affiliate, hoa hồng, hoàn trả và tình trạng đối soát theo đơn hàng. Trường số liệu LIVE của Affiliate bên ngoài có thể không được hỗ trợ ở cấp phiên với quyền Seller hiện tại.</span></div>`;
+        <div class="field full api-permission-card"><b>Tỷ lệ Cộng tác mở chỉ đọc từ TikTok</b><span>Scope <code>seller.affiliate_collaboration.read</code>: <code>POST /affiliate_seller/202412/open_collaborations/search</code> để đọc mức hiện hành. Không cho nhập lại tỷ lệ bằng tay. Hoa hồng đã quyết toán phải dựa trên dữ liệu đơn/statement và quyền Finance được cấp; bản demo không hiển thị giá trị suy đoán.</span></div>`;
       return `
         ${connectionGroup('01 · Firebase Authentication', 'Đăng nhập Google thực và xác thực Firebase ID token tại Cloudflare Worker.')}
         ${configInput('Firebase Project ID','firebase_project','ID dự án Firebase công khai')}

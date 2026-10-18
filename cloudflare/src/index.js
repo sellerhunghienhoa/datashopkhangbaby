@@ -1,4 +1,5 @@
 import { getPartnerTokenStatus, refreshPartnerToken } from './partner-token.js';
+import { SOURCES, importBatch, syncStatus, validateIngestKey } from './sync-pipeline.js';
 // DATA SHOPKHANGBABY – Cloudflare Worker API starter.
 // API dữ liệu D1 thật (mặc định rỗng). CHƯA có trình đồng bộ TikTok/OAuth.
 import { createRemoteJWKSet, jwtVerify } from 'jose';
@@ -54,11 +55,39 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (!['GET', 'POST'].includes(request.method)) return json({ error: 'Phương thức không được hỗ trợ' }, 405, cors);
     const url = new URL(request.url);
-    if (url.pathname === '/api/v1/health') return json({ ok: true, service: 'DATA SHOPKHANGBABY API', mode: 'starter' }, 200, cors);
-    if (!['/api/v1/live-sessions', '/api/v1/affiliate-sessions', '/api/v1/ads-campaigns', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
+    if (url.pathname === '/api/v1/health') return json({ ok: true, service: 'DATA SHOPKHANGBABY API', mode: 'live-backend', tiktok_connected: false }, 200, cors);
+    // Import từ Cloud Shell / connector server. Không dùng Firebase browser token để import.
+    const ingestMatch=url.pathname.match(/^\/api\/v1\/ingest\/(seller|affiliate|ads|orders)$/);
+    if(ingestMatch){
+      if(request.method!=='POST')return json({error:'Chỉ POST'},405,cors);
+      // Không cho API key ingestion đi qua cross-site browser requests.
+      if(origin)return json({error:'Chỉ cho phép kết nối từ backend / Cloud Shell'},403,cors);
+      if(!await validateIngestKey(request,env))return json({error:'Ingest API key không hợp lệ'},401,cors);
+      try{
+        if(Number(request.headers.get('Content-Length')||0)>1024*1024)return json({error:'Payload vượt 1 MB'},413,cors);
+        const raw=await request.text();
+        if(new TextEncoder().encode(raw).byteLength>1024*1024)return json({error:'Payload vượt 1 MB'},413,cors);
+        const data=JSON.parse(raw);
+        return json(await importBatch(env,ingestMatch[1],data.items,data.batch_key),200,cors);
+      }catch(error){
+        const message=String(error?.message||'').slice(0,180);
+        if(/SQLITE_CONSTRAINT|UNIQUE constraint/i.test(message))return json({error:'Batch đã được xử lý; gửi lại batch_key để kiểm tra'},409,cors);
+        return json({error:message||'Dữ liệu nhập không hợp lệ'},400,cors);
+      }
+    }
+    if (!['/api/v1/live-sessions', '/api/v1/affiliate-sessions', '/api/v1/ads-campaigns', '/api/v1/sync/status', '/api/v1/me', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
     try {
       const access = await requireUser(request, env);
       if (access.error) return json({ error: access.error }, access.status, cors);
+      if(url.pathname==='/api/v1/me'){
+        if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);
+        return json({uid:access.user.firebase_uid,role:access.user.role},200,cors);
+      }
+      if(url.pathname==='/api/v1/sync/status'){
+        if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);
+        if(!['Admin','Ops'].includes(access.user.role))return json({error:'Không có quyền xem trạng thái đồng bộ'},403,cors);
+        return json(await syncStatus(env),200,cors);
+      }
       if (url.pathname.startsWith('/api/v1/partner-token/')) {
         if (access.user.role !== 'Admin') return json({error:'Chỉ quản trị viên được quản lý trạng thái Partner'},403,cors);
         if (url.pathname.endsWith('/status')) {
@@ -90,7 +119,7 @@ export default {
         return json({ items: result.results || [], page: Math.floor(offset / limit) + 1, limit }, 200, cors);
       }
       if (url.pathname === '/api/v1/affiliate-sessions') {
-        const result = await env.DB.prepare('SELECT session_id, creator_id, creator_handle, creator_name, started_at, gross_gmv_vnd, net_gmv_vnd, order_count, estimated_commission_vnd FROM affiliate_sessions ORDER BY started_at DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
+        const result = await env.DB.prepare('SELECT session_id, creator_id, creator_handle, creator_name, started_at, gross_gmv_vnd, net_gmv_vnd, order_count FROM affiliate_sessions ORDER BY started_at DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
         return json({ items: result.results || [], page: Math.floor(offset / limit) + 1, limit }, 200, cors);
       }
       const result = await env.DB.prepare('SELECT advertiser_id, campaign_id, campaign_name, report_date, spend_vnd, attributed_revenue_vnd, impressions, clicks, orders FROM ads_campaigns ORDER BY report_date DESC LIMIT ? OFFSET ?').bind(limit, offset).all();

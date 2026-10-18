@@ -15,3 +15,7 @@
 # PARTNER_APP_SECRET=...
 # PARTNER_INITIAL_REFRESH_TOKEN=...
 # PARTNER_TOKEN_ENCRYPTION_KEY=... (base64 32 bytes)
+
+# V50: Khóa riêng để hệ thống đồng bộ / Cloud Shell nhập batch (tạo chuỗi random >= 32 ký tự).
+# Đặt qua: npx wrangler secret put SYNC_INGEST_KEY
+SYNC_INGEST_KEY="REPLACE_WITH_LONG_RANDOM_SECRET"

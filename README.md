@@ -1,4 +1,41 @@
+
+## Cập nhật V52
+
+- Fix triệt để giao diện **màn hình đăng nhập trên điện thoại** để nền trên đỉnh trang, vùng giữa và sát chân trình duyệt liền mạch hơn.
+- Giảm cảm giác khối đăng nhập bị “lọt thỏm” giữa màn hình bằng cách cân lại vị trí card, khoảng đệm safe-area và nền gradient.
+- Bổ sung `theme-color` cho trình duyệt mobile để màu thanh trên cùng hòa với giao diện tím pastel.
+
+# DATA SHOPKHANGBABY — V50: Cấu hình một lần, Cloudflare D1 tự cấp dữ liệu cho web
+
+Bản V50 bổ sung **pipeline backend chống trùng** và **chế độ Live riêng**. Mọi thông tin TikTok API phải được cấp ở Cloudflare/backend, không nhập lại trong frontend.
+
+**Quan trọng:** V50 triển khai được việc lấy **dữ liệu thật đã nhập vào D1** qua Firebase Authentication. V50 **chưa tự gọi TikTok Seller/Ads** vì cần OAuth, quyền API và connector chuẩn hóa dữ liệu. Cloudflare Cron đang tự kiểm tra Partner Token, chưa tự thu thập LIVE/Ads.
+
+## Đã thêm
+
+- Cloudflare `POST /api/v1/ingest/{seller|affiliate|ads|orders}` chỉ cho backend/Cloud Shell có secret.
+- Upsert theo Session ID, Order ID và Advertiser + Campaign + Report Date; batch key chặn nhập lặp.
+- Migrations `0004_sync_pipeline.sql` thêm nhật ký và trạng thái đồng bộ mà không xóa dữ liệu cũ.
+- Firebase Google Login trong `mode:'live'` và xác thực ID token + phân quyền tại Worker.
+- Website tự đọc LIVE, Affiliate và Ads từ D1, tải lại khi mở và tự refresh trên trang sau 15 phút.
+- Tab Kết nối nguồn dữ liệu hiển thị thời gian nhập, tên nguồn và cảnh báo chưa cấu hình adapter TikTok.
+- HTML demo giữ chế độ mô phỏng; dữ liệu thật không bị lẫn với dữ liệu demo.
+- Đã test 10 case backend; xác minh SQLite migrations và upsert giữ đúng một hàng khi ghi trùng; smoke test mobile.
+
+**Hướng dẫn triển khai đầy đủ:** [`docs/V50_GO_LIVE.md`](docs/V50_GO_LIVE.md).
+
+---
+
 # DATA SHOPKHANGBABY — Source code tách file
+
+## V49 — LIVE Affiliate không nhập hoa hồng thủ công
+
+- Xóa khỏi giao diện: các ô nhập tỷ lệ SKU, lịch sử tỷ lệ demo, sổ đối soát hoa hồng mẫu và chỉ số hoa hồng tạm tính.
+- Bảng Affiliate vẫn hiển thị GMV, GMV sau hoàn/hủy, số đơn, đơn hoàn/hủy, nhà sáng tạo và trạng thái; xuất CSV không còn cột hoa hồng giả định.
+- Giữ nguyên các chức năng LIVE chính thức, KPI Host, Ads, phân quyền, màn hình kết nối API và Partner Token Worker.
+- Xem `docs/AFFILIATE_OPEN_COLLAB_API.md` để kết nối tỷ lệ **Cộng tác mở** thật khi TikTok cấp scope `seller.affiliate_collaboration.read`. Chưa có API dữ liệu thật nên không hiển thị tỷ lệ/hoa hồng tự động.
+- Các migration D1 cũ được giữ lại để không phá lịch sử nâng cấp database; việc bỏ tính hoa hồng thủ công chỉ tác động frontend/demo và không tạo khoản hoa hồng mới ở backend.
+
 
 Dự án đã **tách từ bản demo V40** thành HTML / CSS / nhiều file JavaScript để dễ chỉnh sửa và đưa lên Firebase Hosting. Bản V42 thiết kế lại tab **Top Nhà sáng tạo / Kênh bán chạy** để dễ đọc trên máy tính và điện thoại, giữ nguyên các chức năng khác, bao gồm bộ lọc, LIVE, Affiliate, Ads, KPI, hồ sơ, phân quyền, đồng bộ và dọn bộ nhớ **mô phỏng**.
 
@@ -118,3 +155,9 @@ Xem `docs/API_CONNECTIONS.md` mục 6 cho các bước triển khai. Bộ mã de
 - `public/js/affiliate-commission.js` là engine mô phỏng thuần JS; `cloudflare/migrations/0003_affiliate_sku_commissions.sql` là mẫu schema cho backend; `docs/AFFILIATE_SKU_RECONCILIATION.md` mô tả luồng production.
 - `node tests/affiliate-commission.test.cjs` để kiểm thử logic.
 **Chưa có kết nối TikTok Affiliate Orders/Settlement API thực tế trong V47.** Không dùng số liệu giả lập để quyết toán cho đối tác.
+
+
+## Thay đổi V51
+
+- Đồng bộ tên hiển thị **ShopKhangBaby** (không có khoảng trắng) tại toàn bộ website và nhãn dữ liệu mẫu.
+- Giữ nguyên username/API ID `shopkhangbaby`; không thay đổi định danh dùng để truy xuất hay đồng bộ dữ liệu thật.

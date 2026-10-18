@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "session_id": "EXAMPLE-LIVE-ID-ONLY",
+      "channel_username": "shopkhangbaby",
+      "title": "LIVE ví dụ (KHÔNG PHẢI DỮ LIỆU THẬT)",
+      "started_at": "2026-10-17T09:24:00.000Z",
+      "ended_at": "2026-10-17T12:33:00.000Z",
+      "gross_gmv_vnd": 1000000,
+      "canceled_refunded_vnd": 0,
+      "net_gmv_vnd": 1000000,
+      "sold_units": 10,
+      "net_units": 10,
+      "source_updated_at": "2026-10-18T01:00:00.000Z",
+      "reconciled_at": null
+    }
+  ]
+}

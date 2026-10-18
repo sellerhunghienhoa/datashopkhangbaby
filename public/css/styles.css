@@ -15,18 +15,25 @@
       --radius:18px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Be Vietnam Pro',system-ui,sans-serif}
+    html,body{margin:0;padding:0;min-height:100%;background:linear-gradient(180deg,#f3edff 0%,#f8f6fe 32%,#f8f6fe 68%,#f2ecff 100%);color:var(--text);font-family:'Be Vietnam Pro',system-ui,sans-serif}
     body{font-size:13px}
     button,input,select{font:inherit}
     .hidden{display:none!important}
 
     .login{
       position:fixed;inset:0;z-index:5000;overflow:auto;width:100%;
-      min-height:100vh;display:grid;place-items:center;padding:20px;
-      background:radial-gradient(circle at top left,#e6d8ff 0,transparent 30%),
-                 radial-gradient(circle at right bottom,#f3e8ff 0,transparent 35%),
-                 var(--bg);
+      min-height:100vh;min-height:100svh;display:grid;place-items:center;
+      padding:clamp(20px,4vw,32px);
+      padding-top:max(24px,env(safe-area-inset-top));
+      padding-bottom:max(28px,env(safe-area-inset-bottom));
+      background:
+        radial-gradient(70% 42% at 18% 8%,rgba(206,181,255,.52) 0%,rgba(206,181,255,0) 72%),
+        radial-gradient(56% 30% at 82% 92%,rgba(239,216,255,.62) 0%,rgba(239,216,255,0) 74%),
+        linear-gradient(180deg,#f1e8ff 0%,#f8f6fe 34%,#f8f6fe 66%,#f2ebff 100%);
     }
+    .login::before,.login::after{content:'';position:fixed;left:0;right:0;height:88px;pointer-events:none;z-index:-1}
+    .login::before{top:0;background:linear-gradient(180deg,rgba(239,231,255,.92),rgba(239,231,255,0))}
+    .login::after{bottom:0;background:linear-gradient(0deg,rgba(241,233,255,.96),rgba(241,233,255,0))}
     body.auth-signed-out #appShell{display:none!important}
     body.auth-signed-in #loginScreen{display:none!important}
     body.auth-signed-in #appShell{display:flex!important}
@@ -1534,9 +1541,31 @@ body.profile-modal-active{overflow:hidden}
   .rank-intro{padding:15px 16px}
   .rank-source-note span{font-size:11px}
   .toast{left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 76px);bottom:auto;width:auto;max-width:none}
+  .login{display:flex;align-items:center;justify-content:center;min-height:100svh;padding:20px 16px calc(28px + env(safe-area-inset-bottom,0px))}
+  .login-card{width:100%;max-width:430px;padding:30px 22px 26px;border-radius:26px;margin:0 auto;transform:translateY(-1.5vh)}
+  .brand{font-size:24px;line-height:1.12}
+  .login-card h1{margin-top:14px}
 }
 @media (max-width:380px){
   main{padding:0 10px 20px !important}
   .mobile-appbar{margin:0 -10px 12px !important;padding:calc(9px + env(safe-area-inset-top,0px)) 10px 9px !important}
   #content{gap:10px}
+}
+
+/* V50: không bao giờ lộ dashboard trước khi xác minh trạng thái Firebase */
+.auth-pending #appShell,.auth-pending #loginScreen{display:none!important}
+.v50-status{padding:17px;border-radius:16px;background:#fbf9ff;border:1px solid #e6dcf6;margin:14px 0}
+.v50-status-head{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:9px}
+.v50-sync-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.v50-sync-card{display:grid;gap:7px;background:#fff;border:1px solid #ece5f8;border-radius:13px;padding:12px;min-width:0}
+.v50-sync-card b{color:#514084;font-size:12px}.v50-sync-card small{font-size:10.5px;color:#877c9f}.v50-sync-card span{font-size:10px;color:#655a78}
+.v50-channel-list{display:flex;gap:8px;flex-wrap:wrap}.v50-channel-list span{padding:8px;border-radius:10px;background:#f0ebfd;color:#5d43b7;font-size:10px;font-weight:650}
+@media(max-width:580px){.v50-sync-grid{grid-template-columns:1fr}}
+
+@media (max-width:430px){
+  .login{padding-top:max(18px,env(safe-area-inset-top));padding-bottom:max(18px,env(safe-area-inset-bottom));background:
+    radial-gradient(74% 34% at 16% 8%,rgba(208,186,255,.52) 0%,rgba(208,186,255,0) 72%),
+    radial-gradient(64% 32% at 82% 92%,rgba(237,221,255,.72) 0%,rgba(237,221,255,0) 74%),
+    linear-gradient(180deg,#f2eaff 0%,#f8f6fe 38%,#f8f6fe 62%,#f3ebff 100%);}
+  .login-card{transform:translateY(-2vh);box-shadow:0 22px 56px rgba(91,57,168,.12)}
 }

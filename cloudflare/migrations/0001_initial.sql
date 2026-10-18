@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS official_channels (
   active INTEGER NOT NULL DEFAULT 1
 );
 INSERT OR IGNORE INTO official_channels (username, display_name) VALUES
-  ('mekhangsua','Mẹ Khang Sữa'), ('shopkhangbaby','Shop KhangBaby');
+  ('mekhangsua','Mẹ Khang Sữa'), ('shopkhangbaby','ShopKhangBaby');
 
 CREATE TABLE IF NOT EXISTS live_sessions (
   session_id TEXT PRIMARY KEY,

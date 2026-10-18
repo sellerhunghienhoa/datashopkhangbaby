@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
+<body class="auth-pending">
   <section id="loginScreen" class="login hidden">
     <div class="login-card">
       <div class="brand">DATA <span>SHOPKHANGBABY</span></div>
@@ -56,9 +56,9 @@
       <svg class="ui-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
     </button>
         <div id="mobilePageTitle" class="mobile-page-title" aria-live="polite">Tổng quan hệ thống</div>
-        <button id="mobileProfileTrigger" type="button" class="mobile-profile-trigger" aria-label="Mở hồ sơ tài khoản Shop Khangbaby" title="Mở hồ sơ tài khoản" onclick="openProfileModal()">
+        <button id="mobileProfileTrigger" type="button" class="mobile-profile-trigger" aria-label="Mở hồ sơ tài khoản ShopKhangBaby" title="Mở hồ sơ tài khoản" onclick="openProfileModal()">
           <span id="mobileProfileAvatar" class="profile-avatar profile-avatar-sm" aria-hidden="true">SK</span>
-          <span id="mobileProfileName" class="mobile-profile-name">Shop Khangbaby</span>
+          <span id="mobileProfileName" class="mobile-profile-name">ShopKhangBaby</span>
         </button>
       </header>
       <div class="topbar">
@@ -72,7 +72,7 @@
           <button id="returnAdminButton" type="button" class="btn ghost hidden" onclick="exitPermissionPreview()">↩ Quay về quản trị</button>
           <button id="profileTrigger" type="button" class="profile-trigger" onclick="openProfileModal()" aria-haspopup="dialog" aria-label="Mở hồ sơ tài khoản">
             <span id="headerProfileAvatar" class="profile-avatar profile-avatar-sm" aria-hidden="true">SK</span>
-            <span class="profile-trigger-text"><b id="headerProfileName">Shop Khangbaby</b><small id="headerProfileCaption">Tài khoản mẫu</small></span>
+            <span class="profile-trigger-text"><b id="headerProfileName">ShopKhangBaby</b><small id="headerProfileCaption">Tài khoản mẫu</small></span>
           </button>
         </div>
       </div>
@@ -106,12 +106,13 @@
 
     <script src="/js/runtime-config.js" defer></script>
   <script src="/js/data.js" defer></script>
-  <script src="/js/affiliate-commission.js" defer></script>
   <script src="/js/dashboard.js" defer></script>
   <script src="/js/accounts.js" defer></script>
   <script src="/js/storage-demo.js" defer></script>
   <script src="/js/connections-demo.js" defer></script>
   <script src="/js/ui.js" defer></script>
   <script src="/js/api-client.js" defer></script>
+  <script src="/js/live-runtime.js" defer></script>
+  <script src="/js/firebase-auth.js" type="module"></script>
 </body>
 </html>

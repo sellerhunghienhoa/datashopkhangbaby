@@ -332,6 +332,7 @@
       const body=document.body;
       const login=document.getElementById('loginScreen');
       const app=document.getElementById('appShell');
+      body.classList.remove('auth-pending');
       body.classList.toggle('auth-signed-in',signedIn);
       body.classList.toggle('auth-signed-out',!signedIn);
       if(login) login.classList.toggle('hidden',signedIn);
@@ -380,6 +381,7 @@
       if(newList && oldList) newList.scrollLeft = oldX;
       if(oldList) window.scrollTo(window.scrollX,oldY);
       syncMobileMenuButton();
+      if(state.currentTab==='connect' && window.SHOPKHANGBABY_CONFIG?.mode==='live') window.ShopKhangBabyLive?.refreshStatus();
     }
 
     function go(tab){
@@ -393,6 +395,7 @@
     }
 
     function updateHost(id, host){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return toast('Chỉnh Host thực cần API cập nhật được phân quyền và ghi nhật ký. Chưa bật ở chế độ Live.','info');
       if(!hasPermission('editHosts')){toast('Tài khoản không có quyền gắn Host');return;}
       const item = state.liveData.find(x=>x.id===id);
       if(!item) return;
@@ -412,6 +415,10 @@
     }
 
     function signIn(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live'){
+        if(!window.ShopKhangBabyAuth)return toast('Chưa khởi tạo Firebase Authentication, hãy kiểm tra cấu hình.','error');
+        return window.ShopKhangBabyAuth.signIn().catch(e=>toast('Không đăng nhập được: '+e.message,'error'));
+      }
       state.signedIn = true;
       localStorage.setItem('dskh_signed_in', '1');
       syncAuthView();
@@ -419,6 +426,10 @@
     }
 
     function signOut(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live'){
+        if(!window.ShopKhangBabyAuth)return toast('Chưa có Firebase Authentication','error');
+        return window.ShopKhangBabyAuth.signOut().catch(e=>toast('Không đăng xuất được: '+e.message,'error'));
+      }
       closeProfileModal(true);closeTeamModal();closeDeleteTeamModal();
       state.previewMemberId=null;
       state.signedIn = false;
@@ -440,6 +451,7 @@
 
 
     function addDemoLive(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return toast('Không thể thêm phiên demo vào dữ liệu thật.','info');
       if(!hasPermission('editHosts'))return toast('Tài khoản không có quyền thêm phiên');
       const d = Date.now().toString().slice(-16);
       state.liveData.unshift({
