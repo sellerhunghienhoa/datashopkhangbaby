@@ -1,3 +1,31 @@
+# V69 — Xác thực và kích hoạt tài khoản
+
+- Google Firebase, Email/Password, Đăng ký, Quên mật khẩu.
+- Mã kích hoạt một lần do Worker tạo, Admin duyệt trong tab Phân quyền.
+- Người mới luôn là Viewer (Chỉ xem); mã demo chỉ mô phỏng, không cấp quyền thật.
+- Tài liệu triển khai: `docs/V69_AUTH_AND_ACTIVATION.md`.
+
+## V68 — Cột Nhà sáng tạo / Kênh LIVE trong Affiliate
+
+- Giữ tên nhà sáng tạo ở đầu cột.
+- Đưa tên phiên `LIVE: ...` ngay dưới tên nhà sáng tạo, rõ nét hơn.
+- Hai dòng `Kênh: ...` và `ID kênh: ...` hiển thị chữ nhỏ, nhẹ hơn đúng ảnh tham khảo.
+- Không tạo hoặc thay đổi ID demo; `Chưa đồng bộ` tiếp tục hiển thị khi API chưa cung cấp ID.
+- Các cột GMV, đơn hàng, bộ lọc và chức năng sắp xếp giữ nguyên V67.
+
+## V67 — Nâng kích thước thương hiệu menu trên điện thoại
+
+- Tăng chữ DATA SHOPKHANGBABY từ 10–11px lên 19px (16.5px ở màn dưới 361px).
+- Mở vừa khung menu mobile để logo và chữ cân đối, vẫn giữ trên một hàng.
+- Không đổi dữ liệu, API, các bảng và bộ lọc của V66.
+
+## Bản V66 — chỉnh bảng và bố cục
+- Desktop: khoảng cách thống nhất giữa các nhóm KPI, Ads, bảng xếp hạng.
+- Mobile: bảng LIVE có đủ 8 cột như desktop và vuốt ngang; giữ tiêu đề.
+- Sắp xếp GMV không thay vị trí vuốt; trở về mặc định khi đổi tab hoặc mở lại web.
+- Affiliate: một cột nhận diện nhà sáng tạo/kênh với username và Creator ID (nếu backend trả về). Trong demo chưa có ID kênh thật nên hiển thị “Chưa đồng bộ”.
+- Tăng nhẹ chữ cạnh logo trên desktop.
+
 ## V65 — logo, favicon, biểu đồ 7 ngày và mobile
 
 - `public/assets/khangbaby-logo.png`: bản gốc **ảnh số 3** người dùng tải lên, nền trong suốt, dùng ở màn đăng nhập và menu.

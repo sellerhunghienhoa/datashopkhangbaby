@@ -97,5 +97,6 @@ if(V50_LIVE){
   demoAffiliateLives.splice(0,demoAffiliateLives.length);
   syncAuthView();
   document.querySelector('#loginScreen .login-btn span').textContent='Tiếp tục bằng Google';
-  document.querySelector('.login-note').textContent='Đăng nhập Google được xác thực bằng Firebase. Chỉ tài khoản đã được cấp quyền mới truy cập dữ liệu.';
+  document.getElementById('auth69DemoAdmin')?.classList.add('hidden');
+  document.querySelector('.login-note').textContent='Tài khoản mới được cấp quyền Chỉ xem. Quản trị viên có thể kích hoạt và phân quyền thêm.';
 }

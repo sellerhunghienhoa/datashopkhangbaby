@@ -33,8 +33,58 @@
     function hasPermission(feature){return permissionSet().includes(feature);}
     function canAccessTab(tab){const key={team:'manageUsers',connect:'manageAPI',storage:'manageStorage'}[tab]||tab;return hasPermission(key);}
     function teamRoleBadge(role){return `<span class="pill ${role==='Admin'?'purple':role==='Ops'?'ok':'warn'}">${ROLE_NAMES[role]||'Chỉ xem'}</span>`;}
+
+// V69: phần duyệt token server-side, tách khỏi danh sách user demo.
+function activation69Panel(){
+  const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
+  return `<section class="panel activation69"><div class="panel-head"><div><h3>Kích hoạt tài khoản mới</h3><div class="mini">Nhập mã do người đăng ký gửi. Mã chỉ dùng một lần, hết hạn sau 7 ngày.</div></div></div>
+   <form class="activation69-form" onsubmit="approveAccount69(event)">
+     <label>Mã kích hoạt<input id="activation69Token" autocomplete="off" placeholder="KB-…" required spellcheck="false"/></label>
+     <label>Phân quyền<select id="activation69Role" aria-label="Vai trò sau kích hoạt"><option value="Viewer">Chỉ xem</option><option value="Host">Host LIVE</option><option value="Ops">Vận hành sàn</option></select></label>
+     <button class="btn primary" type="submit">Kích hoạt</button>
+   </form>
+   <p class="activation69-demo">${live?'Vai trò mặc định khi đăng ký: Chỉ xem. Admin có thể duyệt Host hoặc Vận hành, không thể cấp quyền Admin bằng mã kích hoạt.':'Chế độ DEMO: mã mô phỏng, không tạo tài khoản Firebase hoặc cấp quyền thực tế.'}</p>
+   <button type="button" class="btn ghost" onclick="loadActivationRequests69()">${live?'Xem yêu cầu đang chờ':'Xem yêu cầu demo'}</button>
+   <div id="activation69List" class="activation69-list" aria-live="polite"></div>
+  </section>`;
+}
+async function loadActivationRequests69(){
+  const el=document.getElementById('activation69List');if(!el)return;
+  const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
+  try{
+    const list=live?(await window.ShopKhangBabyApi.activationRequests(await window.shopKhangBabyGetIdToken())).items:
+      (window.auth69GetDemoRequests?.()||[]).filter(x=>x.status==='pending');
+    el.innerHTML=(list||[]).slice(0,50).map(x=>`<div class="activation69-person"><div><b>${escapeTeam(x.display_name||x.name||'Người đăng ký')}</b><div class="mini">${escapeTeam(x.email)}</div></div><span>${live?(x.email_verified?'Email đã xác minh':'Chưa xác minh email'):'Đang chờ • demo'}</span></div>`).join('')||'<p class="mini">Chưa có yêu cầu chờ duyệt.</p>';
+  }catch(e){el.textContent='Không tải được yêu cầu: '+e.message;}
+}
+async function approveAccount69(event){
+  event.preventDefault();
+  const code=document.getElementById('activation69Token').value.trim().toUpperCase();
+  const role=document.getElementById('activation69Role').value;
+  if(!hasPermission('manageUsers'))return toast('Bạn không có quyền duyệt người dùng','error');
+  const live=window.SHOPKHANGBABY_CONFIG?.mode==='live';
+  try{
+    if(live){
+      await window.ShopKhangBabyApi.activateUser(await window.shopKhangBabyGetIdToken(),code,role);
+      toast('Đã kích hoạt tài khoản; người dùng cần tải lại trang để nhận quyền mới.','success');
+    }else{
+      const list=window.auth69GetDemoRequests?.()||[];
+      const request=list.find(x=>x.code===code&&x.status==='pending');
+      if(!request)throw new Error('Không tìm thấy mã demo còn hiệu lực');
+      request.status='approved';request.role=role;
+      window.auth69SetDemoRequests?.(list);
+      toast('Đã duyệt mã mô phỏng (KHÔNG cấp quyền thật).','success');
+    }
+    document.getElementById('activation69Token').value='';
+    loadActivationRequests69();
+  }catch(e){toast(e.message||'Không thể kích hoạt tài khoản','error');}
+}
+window.loadActivationRequests69=loadActivationRequests69;
+window.approveAccount69=approveAccount69;
+
     function renderTeam(){
-      return `<section class="panel">
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return activation69Panel()+`<section class="panel"><h3>Phân quyền hệ thống</h3><p class="mini">Quản trị viên duyệt bằng mã kích hoạt. Vai trò được lưu tại Cloudflare D1, kiểm tra bởi Worker trước mọi lần đọc dữ liệu. Quản lý tài khoản nâng cao sẽ cần endpoint cập nhật riêng.</p></section>`;
+      return activation69Panel()+`<section class="panel">
         <div class="panel-head team63-head"><div><h3>Quản lý người dùng & phân quyền</h3><div class="mini">Sửa quyền, thêm hoặc xóa tài khoản con trong bản demo.</div></div><button type="button" class="btn primary team63-add" onclick="openTeamEditor()">${icon('plus')} <span>Thêm tài khoản</span></button></div>
         <div class="user-list">${state.members.map(u=>`<div class="user-item ${u.protected?'user-item-owner':''}">
           <div class="profile-avatar profile-avatar-sm" aria-hidden="true">${escapeTeam(initials(u.name))}</div>
@@ -145,6 +195,12 @@
       if(mobileProfile)mobileProfile.setAttribute('aria-label','Mở hồ sơ tài khoản '+p.displayName);
       const r=document.getElementById('returnAdminButton');r.classList.toggle('hidden',!state.previewMemberId && state.role==='Admin');
     }
+    async function requestReissueActivation69(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode!=='live')return toast('Chỉ cấp lại mã khi đã bật xác thực Live.','info');
+      try{const data=await window.ShopKhangBabyApi.reissueActivation(await window.shopKhangBabyGetIdToken());window.showActivationCode(data.activationToken,false);}
+      catch(e){toast(e.message||'Không thể cấp lại mã','error');}
+    }
+    window.requestReissueActivation69=requestReissueActivation69;
     function renderProfileModal(){
       const p=state.profile;
       document.getElementById('profileDialogTitle').textContent='Hồ sơ '+p.displayName;
@@ -152,6 +208,7 @@
       document.getElementById('profileModalContent').innerHTML=`
         <div class="profile-identity">${avatarMarkup(p,true)}<div><div class="modal-kicker">${p.provider==='demo'?'HỒ SƠ MẪU':'TÀI KHOẢN GOOGLE'}</div><h3>${escapeTeam(p.displayName)}</h3><p>${escapeTeam(p.email)}</p><div class="profile-chip">${escapeTeam(role)}</div> ${p.emailVerified?'<div class="profile-chip green">Đã xác minh email</div>':''}</div></div>
         <div class="profile-info"><div class="profile-info-row"><span>Tên hiển thị</span><b>${escapeTeam(p.displayName)}</b></div><div class="profile-info-row"><span>Email</span><b>${escapeTeam(p.email)}</b></div><div class="profile-info-row"><span>Vai trò</span><b>${escapeTeam(role)}</b></div><div class="profile-info-row"><span>Trạng thái</span><b>${p.provider==='demo'?'Đang sử dụng tài khoản mẫu':'Đã cung cấp thông tin Firebase'}</b></div></div>
+        ${window.SHOPKHANGBABY_CONFIG?.mode==='live'&&state.role==='Viewer'?`<div class="profile-note"><b>Quyền Chỉ xem</b> — Nếu đã làm mất mã kích hoạt, bạn có thể yêu cầu cấp lại. Mã cũ sẽ hết hiệu lực. <button type="button" class="btn ghost" onclick="requestReissueActivation69()">Cấp lại mã kích hoạt</button></div>`:''}
         <div class="profile-note">${p.provider==='demo'?'Bản demo chưa đăng nhập Google thật. Khi tích hợp Firebase Authentication, tên và ảnh đại diện sẽ lấy từ tài khoản Google đã xác thực.':'Tên và ảnh đại diện được cung cấp từ Firebase. Quyền truy cập cần được kiểm tra ở máy chủ.'}</div>`;
     }
     let profileCloseTimer = null;

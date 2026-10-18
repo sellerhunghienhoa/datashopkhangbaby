@@ -1,3 +1,4 @@
+import { registerIdentity, reissueToken, listPending, approveToken } from './account-activation.js';
 import { getPartnerTokenStatus, refreshPartnerToken } from './partner-token.js';
 import { SOURCES, importBatch, syncStatus, validateIngestKey } from './sync-pipeline.js';
 // DATA SHOPKHANGBABY – Cloudflare Worker API starter.
@@ -28,23 +29,30 @@ function positiveInt(raw, fallback = 20, max = 100) {
   const n = Number(raw);
   return Number.isInteger(n) && n > 0 ? Math.min(n, max) : fallback;
 }
-async function requireUser(request, env) {
-  if (!env.FIREBASE_PROJECT_ID || !env.DB) throw new Error('Server chưa cấu hình Firebase/D1');
-  const match = (request.headers.get('Authorization') || '').match(/^Bearer (.+)$/i);
-  if (!match) return { error: 'Thiếu Firebase ID token', status: 401 };
-  let verified;
-  try {
-    verified = await jwtVerify(match[1], jwks, {
-      algorithms: ['RS256'],
-      issuer: `https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`,
-      audience: env.FIREBASE_PROJECT_ID
-    });
-  } catch { return { error: 'Firebase ID token không hợp lệ hoặc đã hết hạn', status: 401 }; }
-  const uid = verified.payload.sub;
-  if (typeof uid !== 'string' || !uid) return { error: 'Firebase UID không hợp lệ', status: 401 };
-  const member = await env.DB.prepare('SELECT firebase_uid, role, active FROM app_users WHERE firebase_uid = ?').bind(uid).first();
-  if (!member || !member.active) return { error: 'Tài khoản chưa được quản trị viên cấp quyền', status: 403 };
-  return { user: member };
+
+async function verifyIdentity(request,env){
+ if(!env.FIREBASE_PROJECT_ID||!env.DB)return {error:'Server chưa cấu hình Firebase/D1',status:503};
+ const match=(request.headers.get('Authorization')||'').match(/^Bearer (.+)$/i);
+ if(!match)return {error:'Thiếu Firebase ID token',status:401};
+ try{
+  const verified=await jwtVerify(match[1],jwks,{
+   algorithms:['RS256'],issuer:`https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`,
+   audience:env.FIREBASE_PROJECT_ID
+  });
+  const uid=verified.payload.sub;
+  if(typeof uid!=='string'||!uid)return {error:'Firebase UID không hợp lệ',status:401};
+  return {uid,email:typeof verified.payload.email==='string'?verified.payload.email:'',
+    name:typeof verified.payload.name==='string'?verified.payload.name:'',emailVerified:verified.payload.email_verified===true};
+ }catch{return {error:'Firebase ID token không hợp lệ hoặc hết hạn',status:401};}
+}
+
+
+async function requireUser(request,env){
+ const identity=await verifyIdentity(request,env);
+ if(identity.error)return identity;
+ const member=await env.DB.prepare('SELECT firebase_uid, role, active FROM app_users WHERE firebase_uid=?').bind(identity.uid).first();
+ if(!member||!member.active)return {error:'Tài khoản chưa được kích hoạt hoặc đã bị khóa',status:403};
+ return {user:member,identity};
 }
 
 export default {
@@ -75,13 +83,41 @@ export default {
         return json({error:message||'Dữ liệu nhập không hợp lệ'},400,cors);
       }
     }
+
+// V69: first registration always provisions Viewer; token generated server-side, once.
+if (url.pathname==='/api/v1/registration'||url.pathname==='/api/v1/registration/reissue') {
+  if(request.method!=='POST')return json({error:'Chỉ POST'},405,cors);
+  const identity=await verifyIdentity(request,env);
+  if(identity.error)return json({error:identity.error},identity.status,cors);
+  try {
+    const data=url.pathname.endsWith('reissue')?
+     await reissueToken(env.DB,identity):await registerIdentity(env.DB,identity);
+    return json(data,200,cors);
+  }catch(e){return json({error:String(e.message||'Lỗi đăng ký').slice(0,200)},400,cors);}
+}
+if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activation-requests/approve'){
+  const access=await requireUser(request,env);
+  if(access.error)return json({error:access.error},access.status,cors);
+  if(access.user.role!=='Admin')return json({error:'Chỉ quản trị viên được duyệt tài khoản'},403,cors);
+  try{
+   if(url.pathname.endsWith('/approve')){
+     if(request.method!=='POST')return json({error:'Chỉ POST'},405,cors);
+     const raw=await request.text();
+     if(raw.length>2048)return json({error:'Dữ liệu vượt giới hạn'},413,cors);
+     return json(await approveToken(env.DB,access.identity.uid,JSON.parse(raw)),200,cors);
+   }
+   if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);
+   return json(await listPending(env.DB),200,cors);
+  }catch(e){return json({error:String(e.message||'Lỗi kích hoạt').slice(0,200)},400,cors);}
+}
     if (!['/api/v1/live-sessions', '/api/v1/affiliate-sessions', '/api/v1/ads-campaigns', '/api/v1/sync/status', '/api/v1/me', '/api/v1/partner-token/status', '/api/v1/partner-token/refresh'].includes(url.pathname)) return json({ error: 'Không tìm thấy endpoint' }, 404, cors);
     try {
       const access = await requireUser(request, env);
       if (access.error) return json({ error: access.error }, access.status, cors);
       if(url.pathname==='/api/v1/me'){
         if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);
-        return json({uid:access.user.firebase_uid,role:access.user.role},200,cors);
+        const pending=await env.DB.prepare(`SELECT 1 AS pending FROM account_activation_requests WHERE firebase_uid=? AND status='pending'`).bind(access.user.firebase_uid).first();
+        return json({uid:access.user.firebase_uid,role:access.user.role,pendingActivation:!!pending},200,cors);
       }
       if(url.pathname==='/api/v1/sync/status'){
         if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);

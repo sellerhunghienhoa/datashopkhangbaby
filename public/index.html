@@ -5,25 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <meta name="color-scheme" content="light">
-  <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon.png?v=65">
-  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png?v=65">
-  <title>DATA SHOPKHANGBABY · Dashboard Demo V65</title>
+  <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon.png?v=69">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png?v=69">
+  <title>DATA SHOPKHANGBABY · Dashboard Demo V69</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css?v=65">
+    <link rel="stylesheet" href="/css/styles.css?v=69">
 </head>
 <body class="auth-pending">
-  <section id="loginScreen" class="login hidden">
-    <div class="login-card">
-      <div class="brand"><img class="site61-brand-image" src="/assets/khangbaby-logo.png" alt="Logo Khang Baby"> <span class="site61-brand-title">DATA <b>SHOPKHANGBABY</b></span></div>
-      <h1 style="margin:14px 0 8px;font-size:30px">Đăng nhập dashboard</h1>
-      <p class="subtitle">Theo dõi phiên LIVE đã kết thúc, đối soát doanh thu và phân tích quảng cáo TikTok trong một giao diện duy nhất.</p>
-      <button class="login-btn" onclick="signIn()"><svg class="google-logo" width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.76 7.18l7.73 6C44.42 38.03 46.98 31.86 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.46-.76-3.02-.76-4.59s.27-3.13.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Tiếp tục bằng Google — Demo</span></button>
-      <div class="login-note">Bản demo chỉ mô phỏng đăng nhập Google / Firebase.</div>
-    </div>
-  </section>
 
+<section id="loginScreen" class="login hidden" aria-label="Xác thực tài khoản">
+  <div class="login-card auth69-card">
+    <div class="brand"><img class="site61-brand-image" src="/assets/khangbaby-logo.png" alt="Logo Khang Baby"> <span class="site61-brand-title">DATA <b>SHOPKHANGBABY</b></span></div>
+    <h1 class="auth69-heading" id="auth69Heading">Đăng nhập dashboard</h1>
+    <p class="subtitle auth69-subtitle">Theo dõi LIVE, doanh thu, quảng cáo và KPI trên một hệ thống.</p>
+    <div class="auth69-tabs" role="tablist" aria-label="Tài khoản">
+      <button id="auth69TabLogin" type="button" class="auth69-tab is-active" role="tab" aria-selected="true" onclick="setAuthPanel('login')">Đăng nhập</button>
+      <button id="auth69TabRegister" type="button" class="auth69-tab" role="tab" aria-selected="false" onclick="setAuthPanel('register')">Đăng ký</button>
+    </div>
+    <form id="auth69Login" class="auth69-form" onsubmit="submitEmailSignIn(event)">
+      <label class="auth69-label">Email tài khoản<input type="email" id="auth69LoginEmail" autocomplete="email" placeholder="example@gmail.com" required></label>
+      <label class="auth69-label">Mật khẩu<input type="password" id="auth69LoginPassword" autocomplete="current-password" placeholder="Nhập mật khẩu" required></label>
+      <button type="button" class="auth69-text-button" onclick="setAuthPanel('reset')">Quên mật khẩu?</button>
+      <button type="submit" class="auth69-submit">Đăng nhập bằng mật khẩu</button>
+    </form>
+    <form id="auth69Register" class="auth69-form hidden" onsubmit="submitRegistration(event)">
+      <label class="auth69-label">Họ và tên<input type="text" id="auth69RegisterName" autocomplete="name" maxlength="100" placeholder="Tên người dùng" required></label>
+      <label class="auth69-label">Email<input type="email" id="auth69RegisterEmail" autocomplete="email" placeholder="example@gmail.com" required></label>
+      <label class="auth69-label">Mật khẩu mới<input type="password" id="auth69RegisterPassword" autocomplete="new-password" minlength="8" placeholder="Tối thiểu 8 ký tự" required></label>
+      <label class="auth69-label">Xác nhận mật khẩu<input type="password" id="auth69RegisterConfirm" autocomplete="new-password" minlength="8" placeholder="Nhập lại mật khẩu" required></label>
+      <button type="submit" class="auth69-submit">Tạo tài khoản</button>
+      <p class="auth69-form-hint">Tài khoản mới chỉ có quyền <b>Chỉ xem</b>. Gửi mã kích hoạt cho quản trị viên để được phân quyền.</p>
+    </form>
+    <form id="auth69Reset" class="auth69-form hidden" onsubmit="submitPasswordReset(event)">
+      <p class="auth69-form-hint">Nhập email đã đăng ký. Firebase sẽ gửi liên kết đặt lại mật khẩu nếu tài khoản tồn tại.</p>
+      <label class="auth69-label">Email nhận liên kết<input type="email" id="auth69ResetEmail" autocomplete="email" placeholder="example@gmail.com" required></label>
+      <button type="submit" class="auth69-submit">Gửi liên kết khôi phục</button>
+      <button type="button" class="auth69-text-button auth69-back" onclick="setAuthPanel('login')">Quay lại đăng nhập</button>
+    </form>
+    <div id="auth69GoogleGroup" class="auth69-google-group">
+      <div class="auth69-divider"><span>hoặc</span></div>
+      <button type="button" class="login-btn" onclick="signIn()"><svg class="google-logo" width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.76 7.18l7.73 6C44.42 38.03 46.98 31.86 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.46-.76-3.02-.76-4.59s.27-3.13.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Tiếp tục bằng Google — Demo</span></button>
+    </div>
+    <button id="auth69DemoAdmin" type="button" class="auth69-text-button auth69-demo-admin" onclick="demoAdmin69()">Xem thử vai trò quản trị (Demo)</button>
+      <div id="auth69Message" class="auth69-message" role="status" aria-live="polite"></div>
+    <div class="login-note">Đang xem demo. Chế độ Live cần Firebase Authentication và Cloudflare Worker.</div>
+  </div>
+</section>
+<div id="auth69CodeModal" class="dialog-overlay hidden" role="presentation">
+  <div class="auth69-code-dialog" role="dialog" aria-modal="true" aria-labelledby="auth69CodeTitle">
+    <span class="modal-kicker">YÊU CẦU KÍCH HOẠT</span>
+    <h2 id="auth69CodeTitle">Mã kích hoạt tài khoản</h2>
+    <p>Gửi mã dưới đây riêng cho quản trị viên. Mã chỉ được hiển thị khi cấp và không phải mật khẩu đăng nhập.</p>
+    <code id="auth69CodeText" class="auth69-code-value"></code>
+    <div class="auth69-code-actions"><button type="button" class="btn ghost" onclick="copyActivationCode()">Sao chép mã</button><button type="button" class="btn primary" onclick="closeActivationCode()">Đã lưu mã</button></div>
+    <p class="auth69-form-hint" id="auth69CodeNote">Tài khoản chỉ có quyền Chỉ xem cho đến khi quản trị viên duyệt.</p>
+  </div>
+</div>
   <section id="appShell" class="app">
     <div id="mobileMenuOverlay" class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
     <aside id="mobileSidebar" aria-label="Điều hướng website">
@@ -106,15 +145,16 @@
 
   <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="/js/runtime-config.js?v=65" defer></script>
-  <script src="/js/data.js?v=65" defer></script>
-  <script src="/js/dashboard.js?v=65" defer></script>
-  <script src="/js/accounts.js?v=65" defer></script>
-  <script src="/js/storage-demo.js?v=65" defer></script>
-  <script src="/js/connections-demo.js?v=65" defer></script>
-  <script src="/js/ui.js?v=65" defer></script>
-  <script src="/js/api-client.js?v=65" defer></script>
-  <script src="/js/live-runtime.js?v=65" defer></script>
-  <script src="/js/firebase-auth.js?v=65" type="module"></script>
+    <script src="/js/runtime-config.js?v=69" defer></script>
+  <script src="/js/data.js?v=69" defer></script>
+  <script src="/js/dashboard.js?v=69" defer></script>
+  <script src="/js/accounts.js?v=69" defer></script>
+  <script src="/js/storage-demo.js?v=69" defer></script>
+  <script src="/js/connections-demo.js?v=69" defer></script>
+  <script src="/js/ui.js?v=69" defer></script>
+  <script src="/js/api-client.js?v=69" defer></script>
+  <script src="/js/live-runtime.js?v=69" defer></script>
+  <script src="/js/auth-forms.js?v=69" defer></script>
+  <script src="/js/firebase-auth.js?v=69" type="module"></script>
 </body>
 </html>

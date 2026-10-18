@@ -539,7 +539,7 @@
         state.liveSortDirection = '';
       }
       state.livePage = 1;
-      render();
+      renderSortedContent();
     }
 
     function liveSortHeader(field, label){
@@ -632,7 +632,7 @@
         state.affiliateSortDirection = '';
       }
       state.affiliatePage = 1;
-      render();
+      renderSortedContent();
     }
 
     function affiliateSortHeader(field, label){
@@ -701,14 +701,13 @@
           <div class="panel-head"><div><h3>${icon('users','heading-icon')} Danh sách đối tác và phiên LIVE Affiliate</h3><div class="mini">Xem đối tác nào đang đóng góp doanh thu từ sản phẩm của shop</div></div><span class="pill purple">${all.length} phiên minh họa</span></div>
           <div class="mini affiliate-scroll-hint">Vuốt ngang bảng để xem đầy đủ doanh số, đơn hàng và trạng thái.</div>
           <div class="table-wrap"><table class="affiliate-table">
-            <thead><tr><th>Nhà sáng tạo / Kênh</th><th>Phiên LIVE</th><th>Thời gian</th><th>Thời lượng</th><th>${affiliateSortHeader('gross','GMV đã ghi nhận')}</th><th>${affiliateSortHeader('net','GMV sau hoàn hủy')}</th><th>Số đơn</th><th>Đơn hoàn / hủy</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>Nhà sáng tạo / Kênh LIVE</th><th>Thời gian</th><th>Thời lượng</th><th>${affiliateSortHeader('gross','GMV đã ghi nhận')}</th><th>${affiliateSortHeader('net','GMV sau hoàn hủy')}</th><th>Số đơn</th><th>Đơn hoàn / hủy</th><th>Trạng thái</th></tr></thead>
             <tbody>${current.length?current.map(a=>`<tr>
-              <td><b>${configSafe(a.creator)}</b><div class="mini">${configSafe(a.handle)}</div></td>
-              <td><b>${configSafe(a.title)}</b><div class="mini">${configSafe(a.id)}</div></td>
+              <td class="affiliate-creator-col"><b class="affiliate-creator-name">${configSafe(a.creator||a.channelName||'Chưa có tên kênh')}</b><div class="affiliate-session-title" title="${configSafe(a.title||'')}">LIVE: ${configSafe(a.title||'Chưa có tên LIVE')}</div><div class="affiliate-creator-meta">Kênh: ${configSafe(a.handle||'Chưa có username')}</div><div class="affiliate-creator-meta">ID kênh: ${configSafe(a.creatorId||a.channelId||'Chưa đồng bộ')}</div></td>
               <td>${configSafe(a.start)}</td><td>${configSafe(a.duration)}</td>
               <td><b>${money(a.gross)}</b></td><td><b>${money(a.gross-a.refund)}</b></td>
               <td>${a.orders}</td><td>${a.returned}</td><td><span class="pill warn">${configSafe(a.status)}</span></td>
-            </tr>`).join(''):'<tr><td colspan="9" class="affiliate-empty">Không có phiên Affiliate trong bộ lọc đang chọn.</td></tr>'}</tbody>
+            </tr>`).join(''):'<tr><td colspan="8" class="affiliate-empty">Không có phiên Affiliate trong bộ lọc đang chọn.</td></tr>'}</tbody>
           </table></div>
           <div class="live-pager"><span>Hiển thị ${all.length?from+1:0}–${Math.min(from+20,all.length)} / ${all.length} phiên</span>
             <div class="page-actions"><button class="btn ghost" onclick="changeAffiliatePage(-1)" ${state.affiliatePage<=1?'disabled':''}>${icon('chevron-left')} Trước</button><span>Trang ${state.affiliatePage}/${totalPages}</span><button class="btn ghost" onclick="changeAffiliatePage(1)" ${state.affiliatePage>=totalPages?'disabled':''}>Sau ${icon('chevron-right')}</button></div>
@@ -823,7 +822,7 @@
     }
     function exportAffiliateCSV(){
       const rows=affiliateRows();
-      const lines=[['Nhà sáng tạo','Kênh Affiliate','Tên phiên','Thời gian','Thời lượng','GMV ghi nhận','GMV sau hoàn hủy','Số đơn','Số đơn hoàn hủy','Trạng thái'],...rows.map(x=>[x.creator,x.handle,x.title,x.start,x.duration,x.gross,x.gross-x.refund,x.orders,x.returned,x.status])];
+      const lines=[['Nhà sáng tạo','Kênh Affiliate','ID kênh','Tên phiên','Thời gian','Thời lượng','GMV ghi nhận','GMV sau hoàn hủy','Số đơn','Số đơn hoàn hủy','Trạng thái'],...rows.map(x=>[x.creator,x.handle,x.creatorId||x.channelId||'',x.title,x.start,x.duration,x.gross,x.gross-x.refund,x.orders,x.returned,x.status])];
       const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
       const blob=new Blob(['\ufeff'+lines.map(line=>line.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'});
       const anchor=document.createElement('a');anchor.href=URL.createObjectURL(blob);anchor.download='DATA_SHOPKHANGBABY_AFFILIATE_DEMO.csv';anchor.click();URL.revokeObjectURL(anchor.href);
@@ -835,7 +834,7 @@
       if(state[key]!==field){state[key]=field;state[dir]='desc';}
       else if(state[dir]==='desc')state[dir]='asc';
       else{state[key]='';state[dir]='';}
-      render();
+      renderSortedContent();
     }
 
     function reportGmvSortHeader(report, field, label){

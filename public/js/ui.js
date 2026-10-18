@@ -383,7 +383,7 @@
         affiliateDate:'all', affiliateStart:'', affiliateEnd:'',
         leaderScope:'all', leaderSort:'net', leaderDetailSortField:'', leaderDetailSortDirection:'',
         orderSortField:'', orderSortDirection:'',
-        liveSortField:'', liveSortDirection:'', affiliateSortField:'gross', affiliateSortDirection:'desc',
+        liveSortField:'', liveSortDirection:'', affiliateSortField:'', affiliateSortDirection:'',
         livePage:1, affiliatePage:1
       });
       applyPresetDateRange('30');
@@ -424,7 +424,17 @@
       renderCurrentTabContent();
     }
 
+    // V66: cập nhật bảng sau sort mà không dựng lại thanh lọc hay kéo bảng về bên trái.
+    // Sort chỉ thuộc phiên hiện tại, không được ghi vào localStorage.
+    function renderSortedContent(){
+      const y=window.scrollY;
+      renderCurrentTabContent();
+      window.scrollTo({top:y,left:window.scrollX,behavior:'instant'});
+    }
+
     function renderCurrentTabContent(){
+      const scrollXValues=Array.from(document.querySelectorAll('#content .live-wrapper, #content .table-wrap')).map(el=>({x:el.scrollLeft,y:el.scrollTop}));
+      const pageY=window.scrollY;
       let html = '';
       if(state.currentTab==='overview') html = renderOverview();
       if(state.currentTab==='leaders') html = renderLeaders();
@@ -443,7 +453,17 @@
       enhanceAllSelects();
       const newList = document.querySelector('#content .live-wrapper');
       if(newList && oldList) newList.scrollLeft = oldX;
-      if(oldList) window.scrollTo(window.scrollX,oldY);
+      const newScrollAreas=Array.from(document.querySelectorAll('#content .live-wrapper, #content .table-wrap'));
+      const restoreScroll=()=>{
+        newScrollAreas.forEach((area,index)=>{
+          const saved=scrollXValues[index]; if(!saved)return;
+          area.scrollLeft=saved.x;area.scrollTop=saved.y;
+        });
+      };
+      restoreScroll();
+      if(oldList || scrollXValues.length){window.scrollTo({left:window.scrollX,top:pageY,behavior:'instant'});}
+      // Một số trình duyệt cập nhật layout sau khi thay bảng: áp dụng lại sau một frame.
+      if(scrollXValues.some(x=>x.x>0))requestAnimationFrame(restoreScroll);
       syncMobileMenuButton();
       if(state.currentTab==='connect' && window.SHOPKHANGBABY_CONFIG?.mode==='live') window.ShopKhangBabyLive?.refreshStatus();
     }
@@ -474,6 +494,8 @@
         return;
       }
       if(state.currentTab===tab){closeMobileMenu();return;}
+      // Không giữ cách sắp xếp khi rời tab, sẽ về thứ tự mặc định nếu mở lại.
+      Object.assign(state,{liveSortField:'',liveSortDirection:'',affiliateSortField:'',affiliateSortDirection:'',orderSortField:'',orderSortDirection:'',leaderDetailSortField:'',leaderDetailSortDirection:''});
       closeMobileMenu();
       window.scrollTo(0,0);
       state.currentTab = tab;
@@ -507,11 +529,22 @@
         return window.ShopKhangBabyAuth.signIn().catch(e=>toast('Không đăng nhập được: '+e.message,'error'));
       }
       state.signedIn = true;
+      state.role='Viewer';state.previewMemberId=null;
+      state.profile={displayName:'Tài khoản demo',email:'viewer@example.com',photoURL:'',uid:'',emailVerified:false,provider:'demo'};
+      localStorage.setItem('dskh_role','Viewer');
       localStorage.setItem('dskh_signed_in', '1');
       resetBrowsingFilters(false);
       syncAuthView();
       render();
       animateViewEntrance();
+    }
+
+    function demoAdmin69(){
+      if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return;
+      state.signedIn=true;state.role='Admin';state.previewMemberId=null;
+      state.profile={displayName:'Quản trị Demo',email:'admin-demo@example.com',photoURL:'',uid:'',emailVerified:false,provider:'demo'};
+      localStorage.setItem('dskh_role','Admin');localStorage.setItem('dskh_signed_in','1');
+      syncAuthView();render();toast('Chế độ quản trị DEMO, không cấp quyền thực tế.');
     }
 
     function signOut(){
