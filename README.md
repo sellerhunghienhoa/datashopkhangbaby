@@ -10,3 +10,5 @@ Bản V80 không dữ liệu demo, bổ sung:
 Đọc hướng dẫn triển khai chi tiết tại `docs/V81_AUTO_SYNC_AND_TOKEN.md`, sau đó mới chạy `wrangler deploy`.
 
 **Bảo mật:** tuyệt đối không đưa App Secret, refresh/access token hoặc key mã hóa lên frontend/Git/chat.
+
+Xem `docs/V82_ADMIN_ROLE_FIX.md` cho thay đổi Admin/Viewer và triển khai an toàn.

@@ -25,20 +25,54 @@ if(config?.mode==='live'){
    };
    window.shopKhangBabyGetIdToken=()=>window.ShopKhangBabyAuth.getToken();
    let currentUid='',currentTask=0;
+   let refreshInFlight=false;
+   // Recheck server role after auth changes, tab resume and explicit access refresh.
+   async function syncServerAccess(user, task, firstLogin=false){
+     if(!user || task!==currentTask || refreshInFlight)return;
+     refreshInFlight=true;
+     try{
+       const token=await user.getIdToken(true);
+       if(task!==currentTask)return;
+       if(firstLogin)await window.ShopKhangBabyApi.register(token);
+       const me=await window.ShopKhangBabyApi.me(token);
+       if(task!==currentTask)return;
+       if(me.uid!==user.uid)throw new Error('UID không khớp: phiên Firebase và D1 không thuộc cùng tài khoản.');
+       if(!['Admin','Ops','Host','Viewer'].includes(me.role))throw new Error('Worker trả vai trò không hợp lệ.');
+       if(me.role==='Admin' && me.pendingActivation){
+         // Pending onboarding is not permission revocation; server still decides access.
+         console.info('Account has a pending legacy activation request; server role remains Admin.');
+       }
+       if(!window.ShopKhangBabyLive || typeof window.ShopKhangBabyLive.signedIn!=='function')throw new Error('Module Dashboard chưa tải.');
+       if(!state.signedIn || state.profile?.uid!==user.uid){
+         await window.ShopKhangBabyLive.signedIn(user,me);
+       }else if(state.role!==me.role){
+         state.role=me.role;
+         state.previewMemberId=null;
+         render();
+         toast('Đã đồng bộ quyền tài khoản: '+({Admin:'Quản trị viên',Ops:'Vận hành',Host:'Host',Viewer:'Chỉ xem'}[me.role]),'info');
+       }
+       currentUid=user.uid;
+       // Use server UID/role as the only authority. No email whitelist or localStorage admin override.
+       if(firstLogin && me.pendingActivation && me.role==='Viewer')toast('Tài khoản đang chờ kích hoạt.','info');
+     }catch(e){
+       if(task!==currentTask)return;
+       const msg=e?.message||'Không tải được quyền từ máy chủ.';
+       if(firstLogin){window.ShopKhangBabyLive?.signedOut();window.ShopKhangBabyLive?.authError('Không đồng bộ được quyền từ Cloudflare: '+msg);}
+       else {window.ShopKhangBabyLive?.authError('Lỗi làm mới phân quyền: '+msg);}
+       console.error('SERVER_ACCESS_SYNC_FAILED',msg);
+     }finally{refreshInFlight=false;}
+   }
+   window.shopKhangBabyRefreshAccess=()=>auth.currentUser ? syncServerAccess(auth.currentUser,currentTask,false):Promise.reject(new Error('Chưa đăng nhập'));
    onAuthStateChanged(auth,async user=>{
-    const task=++currentTask;
-    if(!user){currentUid='';window.ShopKhangBabyLive?.signedOut();return;}
-    try{
-      const token=await user.getIdToken(true);
-      // Token đăng ký chỉ cấp trong lần đầu; role Viewer do SERVER quyết định.
-      const registered=await window.ShopKhangBabyApi.register(token);
-      const me=await window.ShopKhangBabyApi.me(token);
-      if(task!==currentTask)return;
-      await window.ShopKhangBabyLive.signedIn(user,me);
-      if(registered.activationToken)window.showActivationCode(registered.activationToken,false);
-      else if(me.pendingActivation){toast('Tài khoản đang ở quyền Chỉ xem. Gửi mã kích hoạt cho quản trị viên.','info');}
-      currentUid=user.uid;
-    }catch(e){if(task!==currentTask)return;window.ShopKhangBabyLive?.signedOut();window.ShopKhangBabyLive?.authError(e.message||'Không thể xác thực tài khoản.');}
+     const task=++currentTask;
+     if(!user){currentUid='';window.ShopKhangBabyLive?.signedOut();return;}
+     await syncServerAccess(user,task,true);
+   });
+   document.addEventListener('visibilitychange',()=>{
+     if(document.visibilityState==='visible' && auth.currentUser && currentUid===auth.currentUser.uid)syncServerAccess(auth.currentUser,currentTask,false);
+   });
+   window.addEventListener('focus',()=>{
+     if(auth.currentUser && currentUid===auth.currentUser.uid)syncServerAccess(auth.currentUser,currentTask,false);
    });
   }catch(e){window.ShopKhangBabyLive?.authError('Không khởi tạo được Firebase Auth: '+e.message);}
  })();

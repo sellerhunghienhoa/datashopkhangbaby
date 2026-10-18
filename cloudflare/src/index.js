@@ -118,7 +118,7 @@ if(url.pathname==='/api/v1/activation-requests'||url.pathname==='/api/v1/activat
       if(url.pathname==='/api/v1/me'){
         if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);
         const pending=await env.DB.prepare(`SELECT 1 AS pending FROM account_activation_requests WHERE firebase_uid=? AND status='pending'`).bind(access.user.firebase_uid).first();
-        return json({uid:access.user.firebase_uid,role:access.user.role,pendingActivation:!!pending},200,cors);
+        return json({uid:access.user.firebase_uid,email:access.identity.email,role:access.user.role,pendingActivation:!!pending},200,cors);
       }
       if(url.pathname==='/api/v1/sync/status'){
         if(request.method!=='GET')return json({error:'Chỉ GET'},405,cors);

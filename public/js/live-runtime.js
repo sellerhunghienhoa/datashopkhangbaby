@@ -65,7 +65,7 @@ window.ShopKhangBabyLive={
   },
   signedOut(){
     if(v50RefreshTimer){clearInterval(v50RefreshTimer);v50RefreshTimer=null;}
-    state.signedIn=false;resetBrowsingFilters(false);state.liveData=[];
+    state.signedIn=false;state.role='Viewer';state.previewMemberId=null;state.profile={displayName:'',email:'',photoURL:'',uid:'',emailVerified:false,provider:'firebase'};resetBrowsingFilters(false);state.liveData=[];
     syncAuthView();
   },
   authError(message){

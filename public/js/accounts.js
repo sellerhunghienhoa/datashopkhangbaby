@@ -152,7 +152,7 @@ function openTeamEditor(id=''){
       if(!member)return;
       state.previewMemberId=id;state.role=member.role;state.currentTab='overview';render();toast('Đang xem thử quyền: '+member.name);
     }
-    function exitPermissionPreview(){state.previewMemberId=null;state.role='Admin';state.currentTab='team';render();toast('Đã trở lại quyền quản trị demo');}
+    function exitPermissionPreview(){if(window.SHOPKHANGBABY_CONFIG?.mode==='live')return;state.previewMemberId=null;state.role='Admin';state.currentTab='team';render();}
     // Firebase integration point: call window.setDashboardGoogleUser(user)
     // only from a verified onAuthStateChanged callback. No real OAuth is performed in this file.
     function setDashboardGoogleUser(user){
