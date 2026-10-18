@@ -1,3 +1,14 @@
+**LƯU Ý KHI KIỂM TRA TRÊN iPHONE:** Đây là bản mã nguồn, **chưa tự cập nhật website `datashopkhangbaby.web.app`**. Sau khi triển khai ZIP V55 lên Firebase Hosting, hãy tải lại Safari (nếu cần mở tab riêng/Private để loại trừ cache). `firebase.json` đã đặt `Cache-Control: no-cache` và các đường dẫn CSS/JS thêm `?v=55`. Vùng chứa thanh địa chỉ dưới cùng của Safari do iOS vẽ, website chỉ có thể phối nền để giảm đường phân cách, không thể đổi toàn bộ giao diện gốc của Safari.
+
+## V55 — sửa nền Safari iPhone theo video người dùng
+
+- Loại bỏ các lớp nền `body::before`/`body::after` âm z-index bị lệch khi Safari co giãn thanh công cụ.
+- Dùng một nền theo chiều dài tài liệu, **trắng ở đầu, tím nhạt ở thân, chuyển mềm về trắng ở cuối** để vùng cuối hợp với thanh Safari trắng.
+- Dùng chung công thức nền cho login và dashboard; login cố định theo `100dvh`.
+- Đăng xuất đặt lại cả scroll của trang và scroll riêng màn đăng nhập.
+- Loại bỏ padding/cuối trang chồng lắp từ các bản V53–V54, bỏ viền cứng dưới header.
+- Safari toolbar là giao diện hệ điều hành và không thể điều khiển hoàn toàn bằng CSS web; cách sửa này làm tương phản tại ranh giới nhỏ hơn chứ không sửa được giao diện gốc của Safari.
+
 ## Cập nhật V54
 
 - Bổ sung **viewport-fit=cover** để iPhone/Safari không còn tạo dải trắng ở **đỉnh** và **chân** trang.

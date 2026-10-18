@@ -342,8 +342,15 @@
         closeMobileMenu();
         document.getElementById('toolbar').innerHTML='';
         document.getElementById('content').innerHTML='';
-        window.requestAnimationFrame(()=>window.scrollTo(0,0));
-        setTimeout(()=>window.scrollTo(0,0),0);
+        // Safari iOS giữ scroll riêng của fixed login và scroll trang khi đóng app.
+        if(login) login.scrollTop=0;
+        document.documentElement.scrollTop=0;
+        document.body.scrollTop=0;
+        window.scrollTo(0,0);
+        window.requestAnimationFrame(()=>{
+          if(login) login.scrollTop=0;
+          window.scrollTo(0,0);
+        });
       }
       syncMobileMenuButton();
     }
