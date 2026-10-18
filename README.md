@@ -1,3 +1,10 @@
+## Cập nhật V53
+
+- Tối ưu tiếp **nền mobile** để liền mạch hơn ở cả trạng thái **đăng nhập / đăng xuất / đang xem dashboard**.
+- Sửa cảm giác bị **khuyết đầu trang và chân trang** sau khi logout trên điện thoại.
+- Làm lại **mobile appbar** theo hướng trắng → tím pastel chuyển mượt, bớt cảm giác bị kẻ thành một khối ngang cứng.
+- Cân lại **padding cuối trang + safe-area iPhone** để hạn chế khoảng trắng và khối mờ ở cuối khi cuộn xuống.
+
 
 ## Cập nhật V52
 
