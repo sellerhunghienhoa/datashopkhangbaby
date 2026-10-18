@@ -232,6 +232,18 @@
       return (!from || startDay >= from) && (!to || startDay <= to);
     }
 
+function monthKeyFromDateText(startText){
+  const d=parseDMYHM(startText);
+  if(!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function currentMonthKey(){
+  const now=getDefaultMaxDate();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+}
+
+
     function buildQuickRangeFilter(){
       return `
         <div class="filter-shell filter-shell-compact">
@@ -271,20 +283,7 @@
             ${hasPermission('editHosts') && window.SHOPKHANGBABY_CONFIG?.mode!=='live' ? `<button class="btn primary" onclick="addDemoLive()">${icon('plus')} Thêm phiên demo</button>` : ''}
           </div>`;
       } else if(state.currentTab==='leaders'){
-        toolbar.innerHTML = `
-          <div class="filter-grid is-three leaderboard-filters">
-            <select class="select" aria-label="Lọc nhóm xếp hạng" onchange="state.leaderScope=this.value;render()">
-              <option value="all" ${state.leaderScope==='all'?'selected':''}>Tất cả Nhà sáng tạo & Kênh</option>
-              <option value="creator" ${state.leaderScope==='creator'?'selected':''}>Nhà sáng tạo Affiliate</option>
-              <option value="channel" ${state.leaderScope==='channel'?'selected':''}>Kênh LIVE chính thức</option>
-            </select>
-            ${buildQuickRangeFilter()}
-            <select class="select" aria-label="Tiêu chí xếp hạng" onchange="state.leaderSort=this.value;render()">
-              <option value="net" ${state.leaderSort!=='orders'?'selected':''}>Xếp theo doanh số</option>
-              <option value="orders" ${state.leaderSort==='orders'?'selected':''}>Xếp theo số đơn</option>
-            </select>
-          </div>
-          <div class="toolbar-group page-actions"><button class="btn ghost" onclick="exportLeaderboardCSV()">${icon('download')} Xuất bảng xếp hạng</button></div>`;
+        toolbar.innerHTML = '';
       } else if(state.currentTab==='affiliate'){
         toolbar.innerHTML = `
           <div class="affiliate61-toolbar">
@@ -740,86 +739,89 @@
           return {name:partner[0].creator,handle,net:partner.reduce((sum,x)=>sum+x.gross-x.refund,0),orders:partner.reduce((sum,x)=>sum+x.orders,0),count:partner.length};
         }).sort((a,b)=>b.net-a.net).map((p,i)=>`<div class="affiliate-rank-row"><span class="rank-num">${i+1}</span><span class="partner-name"><b>${configSafe(p.name)}</b><span class="mini">${configSafe(p.handle)} • ${p.count} phiên</span></span><span class="partner-sales"><b>${money(p.net)}</b><span class="mini">${p.orders} đơn</span></span></div>`).join('') || '<div class="mini">Không có dữ liệu để xếp hạng.</div>'}</div></section>`;
     }
-    function leaderboardEntries(scope=state.leaderScope){
-      const channels=new Map();
-      const creators=new Map();
-      state.liveData.filter(x=>OFFICIAL_CHANNELS.some(ch=>ch.toLocaleLowerCase('vi-VN')===String(x.channel||'').toLocaleLowerCase('vi-VN').trim()) && matchSelectedDate(x.start)).forEach(x=>{
-        const key=String(x.channel||'').trim();
-        if(!channels.has(key)) channels.set(key,{kind:'channel',name:key,subtitle:'Kênh LIVE chính thức',gross:0,refund:0,net:0,orders:0,sessions:0});
-        const row=channels.get(key);
-        row.gross+=x.gross;
-        row.refund+=x.refund;
-        row.net+=x.gross-x.refund;
-        row.orders+=ordersAfterCancel(x);
-        row.sessions++;
-      });
-      demoAffiliateLives.filter(x=>matchSelectedDate(x.start)).forEach(x=>{
-        const key=x.handle;
-        if(!creators.has(key)) creators.set(key,{kind:'creator',name:x.creator,subtitle:key,gross:0,refund:0,net:0,orders:0,sessions:0});
-        const row=creators.get(key);
-        row.gross+=x.gross;
-        row.refund+=x.refund;
-        row.net+=x.gross-x.refund;
-        row.orders+=Math.max(0,x.orders-x.returned);
-        row.sessions++;
-      });
-      const rows=[];
-      if(scope!=='creator') rows.push(...channels.values());
-      if(scope!=='channel') rows.push(...creators.values());
-      const key=state.leaderSort==='orders'?'orders':'net';
-      return rows.sort((a,b)=>(b[key]-a[key]) || (b.net-a.net) || a.name.localeCompare(b.name,'vi'));
-    }
+    
+function leaderboardEntries(scope=state.leaderScope, options={}){
+  const settings=options||{};
+  const limitToCurrentMonth=Boolean(settings.fixedMonth);
+  const respectSelectedDate=settings.useSelectedDate!==false;
+  const activeMonthKey=currentMonthKey();
+  const channels=new Map();
+  const creators=new Map();
+  const includeRecord=startText=>{
+    if(limitToCurrentMonth) return monthKeyFromDateText(startText)===activeMonthKey;
+    if(respectSelectedDate) return matchSelectedDate(startText);
+    return true;
+  };
+  state.liveData.filter(x=>OFFICIAL_CHANNELS.some(ch=>ch.toLocaleLowerCase('vi-VN')===String(x.channel||'').toLocaleLowerCase('vi-VN').trim()) && includeRecord(x.start)).forEach(x=>{
+    const key=String(x.channel||'').trim();
+    if(!channels.has(key)) channels.set(key,{kind:'channel',name:key,subtitle:'Kênh LIVE chính thức',gross:0,refund:0,net:0,orders:0,sessions:0});
+    const row=channels.get(key);
+    row.gross+=x.gross;
+    row.refund+=x.refund;
+    row.net+=x.gross-x.refund;
+    row.orders+=ordersAfterCancel(x);
+    row.sessions++;
+  });
+  demoAffiliateLives.filter(x=>includeRecord(x.start)).forEach(x=>{
+    const key=x.handle;
+    if(!creators.has(key)) creators.set(key,{kind:'creator',name:x.creator,subtitle:key,gross:0,refund:0,net:0,orders:0,sessions:0});
+    const row=creators.get(key);
+    row.gross+=x.gross;
+    row.refund+=x.refund;
+    row.net+=x.gross-x.refund;
+    row.orders+=Math.max(0,x.orders-x.returned);
+    row.sessions++;
+  });
+  const rows=[];
+  if(scope!=='creator') rows.push(...channels.values());
+  if(scope!=='channel') rows.push(...creators.values());
+  const key=state.leaderSort==='orders'?'orders':'net';
+  return rows.sort((a,b)=>(b[key]-a[key]) || (b.net-a.net) || a.name.localeCompare(b.name,'vi'));
+}
 
 
 function renderLeaders(){
-  const rows=leaderboardEntries();
-  const allRows=leaderboardEntries('all');
-  const official=allRows.filter(x=>x.kind==='channel').sort((a,b)=>b.net-a.net);
-  const affiliateOnly=allRows.filter(x=>x.kind==='creator').sort((a,b)=>b.net-a.net || b.orders-a.orders || a.name.localeCompare(b.name,'vi'));
-  const topTen=rows.slice(0,10);
+  const monthlyRows=leaderboardEntries('all',{fixedMonth:true});
+  const official=monthlyRows.filter(x=>x.kind==='channel').sort((a,b)=>b.net-a.net);
+  const affiliateOnlyMonthly=monthlyRows.filter(x=>x.kind==='creator').sort((a,b)=>b.net-a.net || b.orders-a.orders || a.name.localeCompare(b.name,'vi'));
+  const topTen=(state.leaderScope==='channel'?official:state.leaderScope==='creator'?affiliateOnlyMonthly:monthlyRows).slice(0,10);
+  const detailSource=leaderboardEntries('creator',{useSelectedDate:true}).filter(x=>x.kind==='creator').sort((a,b)=>{
+    const key=state.leaderSort==='orders'?'orders':'net';
+    return (b[key]-a[key]) || (b.net-a.net) || a.name.localeCompare(b.name,'vi');
+  });
   const quantity=value=>Number(value||0).toLocaleString('vi-VN');
-  const criterion=state.leaderSort==='orders'?'số đơn sau hoàn/hủy':'GMV sau hoàn/hủy';
-  const champion=topTen[0];
-  const avatarText=name=>configSafe((String(name||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('')||'KB').toUpperCase());
-  const topNet=Math.max(1,...topTen.map(x=>x.net||0));
-  const topOrders=Math.max(1,...topTen.map(x=>x.orders||0));
-  const affiliateTotalPages=Math.max(1,Math.ceil(affiliateOnly.length/20));
+  const affiliateTotalPages=Math.max(1,Math.ceil(detailSource.length/20));
   state.leaderPage=Math.min(Math.max(1,state.leaderPage||1),affiliateTotalPages);
   const detailFrom=(state.leaderPage-1)*20;
-  const detailRows=affiliateOnly.slice(detailFrom,detailFrom+20);
+  const detailRows=detailSource.slice(detailFrom,detailFrom+20);
   const topTenCount=Math.min(10,topTen.length);
+  const avatarText=name=>configSafe((String(name||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('')||'KB').toUpperCase());
   const featuredList=topTen.map((x,i)=>`<article class="leaders70-rank-item ${i===0?'is-best':''}">
     <div class="leaders70-rank-left"><span class="leaders70-rank-number">${i+1}</span><span class="leaders70-rank-avatar">${avatarText(x.name)}</span><div class="leaders70-rank-meta"><b>${configSafe(x.name)}</b><small>${configSafe(x.subtitle)}</small></div></div>
     <div class="leaders70-rank-right"><strong>${quantity(x.orders)} đơn</strong><span>${money(x.net)}</span></div>
   </article>`).join('');
-  const chartBars=topTen.map((x,i)=>{
-    const ordersPct=Math.max(8,Math.round((x.orders/topOrders)*100));
-    const netPct=Math.max(6,Math.round((x.net/topNet)*100));
-    return `<div class="leaders70-chart-item"><div class="leaders70-chart-bars"><span class="leaders70-bar orders" style="height:${ordersPct}%"></span><span class="leaders70-bar net" style="height:${netPct}%"></span></div><div class="leaders70-chart-label">${i+1}</div></div>`;
-  }).join('');
+  const detailFilterBar=`<div class="leaders61-detail-toolbar"><div class="leaders61-detail-filter-grid"><div class="filter-shell filter-shell-compact">${buildQuickRangeFilter()}</div><select class="select" aria-label="Tiêu chí xếp hạng dữ liệu đối chiếu" onchange="state.leaderSort=this.value;state.leaderPage=1;render()"><option value="net" ${state.leaderSort!=='orders'?'selected':''}>Xếp theo doanh số</option><option value="orders" ${state.leaderSort==='orders'?'selected':''}>Xếp theo số đơn</option></select></div><button class="btn ghost" onclick="exportLeaderboardCSV()">${icon('download')} Xuất bảng xếp hạng</button></div>`;
   return `
     <section class="leaders61-overview" aria-label="Doanh số theo nguồn">
-      <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon channel">${icon('video')}</span><span>Kênh LIVE chính thức</span></div><strong>${money(official.reduce((sum,x)=>sum+x.net,0))}</strong><small>${quantity(official.length)} kênh có dữ liệu</small></article>
-      <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon creator">${icon('users')}</span><span>Nhà sáng tạo Affiliate</span></div><strong>${money(affiliateOnly.reduce((sum,x)=>sum+x.net,0))}</strong><small>${quantity(affiliateOnly.length)} nhà sáng tạo có dữ liệu</small></article>
+      <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon channel">${icon('video')}</span><span>Kênh LIVE chính thức</span></div><strong>${money(official.reduce((sum,x)=>sum+x.net,0))}</strong><small>Cập nhật theo tháng hiện tại · ${quantity(official.length)} kênh có dữ liệu</small></article>
+      <article class="leaders61-overview-card"><div class="leaders61-overview-top"><span class="leaders61-overview-icon creator">${icon('users')}</span><span>Nhà sáng tạo Affiliate</span></div><strong>${money(affiliateOnlyMonthly.reduce((sum,x)=>sum+x.net,0))}</strong><small>Cập nhật theo tháng hiện tại · ${quantity(affiliateOnlyMonthly.length)} nhà sáng tạo có dữ liệu</small></article>
     </section>
     <section class="leaders61-section leaders70-featured" aria-label="Top 10 nổi bật">
-      <div class="leaders61-section-head"><div><span class="leaders61-section-label">THÀNH TÍCH NỔI BẬT</span><h3>Top 10 dẫn đầu</h3><p>Hiển thị giống thẻ xếp hạng nhanh, nổi bật người dẫn đầu theo ${criterion}</p></div><span class="leaders61-badge">${quantity(topTenCount)}/10 kênh</span></div>
-      ${topTen.length?`<div class="leaders70-ranklist">${featuredList}</div>`:'<div class="rank-empty">Chưa có dữ liệu phù hợp với bộ lọc.</div>'}
-    </section>
-    <section class="leaders61-section leaders70-visual" aria-label="So sánh trực quan bảng xếp hạng">
-      <div class="leaders61-section-head"><div><span class="leaders61-section-label">SO SÁNH TRỰC QUAN</span><h3>Bảng xếp hạng</h3><p>Biểu đồ cột Top 10 trong đó cột hồng là số đơn, cột cam là GMV quy đổi theo tỷ lệ.</p></div><span class="leaders61-badge">${quantity(topTenCount)} đối tượng</span></div>
-      ${champion?`<div class="leaders70-visual-grid"><article class="leaders70-champion-card"><div class="leaders70-champion-head"><span class="leaders70-champion-badge">QUÁN QUÂN NỔI BẬT #1</span><span class="leaders70-crown">👑</span></div><div class="leaders70-champion-name">${configSafe(champion.name)}</div><div class="leaders70-champion-score">${quantity(champion.orders)} đơn • ${money(champion.net)}</div><div class="leaders70-summary-grid"><div class="leaders70-summary-box pink"><span>Tổng Đơn Top 10</span><b>${quantity(topTen.reduce((sum,x)=>sum+x.orders,0))} đơn hàng</b></div><div class="leaders70-summary-box green"><span>Tổng Doanh Số Top 10</span><b>${money(topTen.reduce((sum,x)=>sum+x.net,0))}</b></div></div></article><article class="leaders70-chart-card"><div class="leaders70-chart-head"><div><b>Biểu đồ so sánh 10 kênh hàng đầu</b><small>Top 10 cột phân bố đều · Không bị thừa</small></div></div><div class="leaders70-chart-area">${chartBars}</div><div class="leaders70-chart-legend"><span><i class="leaders70-legend-dot orders"></i>Số đơn</span><span><i class="leaders70-legend-dot net"></i>GMV sau hoàn/hủy</span></div></article></div>`:'<div class="rank-empty">Không có dữ liệu để vẽ biểu đồ.</div>'}
+      <div class="leaders61-section-head"><div><span class="leaders61-section-label">THÀNH TÍCH NỔI BẬT</span><h3>Top 10 dẫn đầu</h3><p>Dữ liệu tổng hợp theo tháng hiện tại, không bị ảnh hưởng bởi bộ lọc ngày ở phần đối chiếu.</p></div><span class="leaders61-badge">${quantity(topTenCount)}/10 kênh</span></div>
+      ${topTen.length?`<div class="leaders70-ranklist">${featuredList}</div>`:'<div class="rank-empty">Chưa có dữ liệu phù hợp trong tháng hiện tại.</div>'}
     </section>
     <section class="leaders61-section leaders61-details">
-      <div class="leaders61-section-head"><div><span class="leaders61-section-label">DỮ LIỆU ĐỐI CHIẾU</span><h3>Chi tiết doanh số & đơn hàng</h3><p>Bảng tổng hợp các bên kéo Affiliate của kênh shop. Tối đa hiển thị 20 tài khoản mỗi trang.</p></div><span class="leaders61-badge">${quantity(affiliateOnly.length)} tài khoản</span></div>
+      <div class="leaders61-section-head"><div><span class="leaders61-section-label">DỮ LIỆU ĐỐI CHIẾU</span><h3>Chi tiết doanh số & đơn hàng</h3><p>Bảng tổng hợp các bên kéo Affiliate của kênh shop. Tối đa hiển thị 20 tài khoản mỗi trang.</p></div><span class="leaders61-badge">${quantity(detailSource.length)} tài khoản</span></div>
+      ${detailFilterBar}
       <div class="table-wrap rank-desktop-table"><table class="leader-table rank-table"><thead><tr><th>Hạng</th><th>Nhà sáng tạo</th><th>Kênh Affiliate</th><th class="rank-th-number">Số phiên</th><th class="rank-th-number">Số đơn</th><th class="rank-th-number">GMV đã ghi nhận</th><th class="rank-th-number">Hoàn / hủy</th><th class="rank-th-number">GMV sau hoàn hủy</th></tr></thead><tbody>
         ${detailRows.map((x,i)=>`<tr><td><span class="rank-table-pos ${(detailFrom+i)===0?'is-best':''}">${detailFrom+i+1}</span></td><td><b>${configSafe(x.name)}</b></td><td><div class="mini">${configSafe(x.subtitle)}</div></td><td class="rank-th-number">${quantity(x.sessions)}</td><td class="rank-th-number">${quantity(x.orders)}</td><td class="rank-th-number">${money(x.gross)}</td><td class="rank-th-number rank-refund">${money(x.refund)}</td><td class="rank-th-number rank-net"><b>${money(x.net)}</b></td></tr>`).join('') || '<tr><td colspan="8" class="leader-empty">Không có kết quả trong khoảng ngày được chọn.</td></tr>'}
       </tbody></table></div>
       <div class="leaders61-mobile-details">${detailRows.map((x,i)=>`<details class="leaders61-mobile-detail"><summary><span class="leaders61-index">${detailFrom+i+1}</span><span class="leaders61-mobile-name"><b>${configSafe(x.name)}</b><small>${configSafe(x.subtitle)}</small></span><strong>${money(x.net)}</strong><span class="leaders61-toggle-icon">⌄</span></summary><div class="leaders61-detail-grid"><div><span>GMV đã ghi nhận</span><b>${money(x.gross)}</b></div><div><span>Hoàn / hủy</span><b>${money(x.refund)}</b></div><div><span>Số đơn</span><b>${quantity(x.orders)}</b></div><div><span>Số phiên</span><b>${quantity(x.sessions)}</b></div></div></details>`).join('')||'<div class="rank-empty">Không có kết quả.</div>'}</div>
-      <div class="pagination-inline"><span>Hiển thị ${affiliateOnly.length?detailFrom+1:0}–${Math.min(detailFrom+20,affiliateOnly.length)} / ${affiliateOnly.length} tài khoản</span><div class="page-actions"><button class="btn ghost" onclick="changeLeaderPage(-1)" ${(state.leaderPage||1)<=1?'disabled':''}>${icon('chevron-left')} Trước</button><span>Trang ${state.leaderPage||1}/${affiliateTotalPages}</span><button class="btn ghost" onclick="changeLeaderPage(1)" ${(state.leaderPage||1)>=affiliateTotalPages?'disabled':''}>Sau ${icon('chevron-right')}</button></div></div>
+      <div class="pagination-inline"><span>Hiển thị ${detailSource.length?detailFrom+1:0}–${Math.min(detailFrom+20,detailSource.length)} / ${detailSource.length} tài khoản</span><div class="page-actions"><button class="btn ghost" onclick="changeLeaderPage(-1)" ${(state.leaderPage||1)<=1?'disabled':''}>${icon('chevron-left')} Trước</button><span>Trang ${state.leaderPage||1}/${affiliateTotalPages}</span><button class="btn ghost" onclick="changeLeaderPage(1)" ${(state.leaderPage||1)>=affiliateTotalPages?'disabled':''}>Sau ${icon('chevron-right')}</button></div></div>
       <div class="leaders61-footnote">${icon('info')} Các tài khoản Affiliate được hiển thị riêng để đối chiếu doanh số và đơn hàng, không cộng gộp với doanh số kênh LIVE chính thức.</div>
     </section>`;
 }
+
     function exportLeaderboardCSV(){
       const rows=leaderboardEntries();
       const quoted=value=>'"'+String(value??'').replace(/"/g,'""').replace(/^([=+@-])/,'\'$1')+'"';
